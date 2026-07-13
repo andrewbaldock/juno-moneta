@@ -1,6 +1,9 @@
 // The engine, visible: a reference page for how Juno models the household.
 // Owner's spec: "almost a wikipedia page about this app and the modeling it's doing."
+// Two sub-tabs: "How Juno works" (the model) and "Design system" (the visual language).
+import { useState } from 'react'
 import { LIQUID_CATEGORIES } from '../lib/metrics'
+import { COIN_SM_SRC } from '../components/juno/motifs'
 
 const REPO = 'https://github.com/andrewbaldock/juno-moneta'
 
@@ -80,15 +83,147 @@ function LoopDiagram() {
   )
 }
 
+/** A single design token, shown as its color over a labelled caption. */
+function Swatch({ token, name, role }: { token: string; name: string; role: string }) {
+  return (
+    <div className="rounded-lg border border-line overflow-hidden bg-card">
+      <div className="h-11" style={{ background: `var(--${token})` }} />
+      <div className="px-2.5 py-1.5">
+        <p className="text-[12px] font-medium text-ink">{name}</p>
+        <p className="text-[11px] text-muted leading-snug">{role}</p>
+      </div>
+    </div>
+  )
+}
+
+/** A status pill in one of the three semantic families (soft bg / ink text / line border). */
+function Pill({ family, children }: { family: 'amber' | 'gold' | 'mint'; children: React.ReactNode }) {
+  return (
+    <span className="text-[11px] rounded-full px-2.5 py-0.5 border"
+      style={{ background: `var(--${family}-soft)`, color: `var(--${family}-ink)`, borderColor: `var(--${family}-line)` }}>
+      {children}
+    </span>
+  )
+}
+
+/** The visual language — Juno Moneta, in tokens you can see. Everything reads from the
+ *  same CSS variables the app uses, so this page recolors itself in light and dark. */
+function DesignSystem() {
+  return (
+    <>
+      <p className="text-[13px] text-muted mb-2">
+        Juno is named for <b className="text-ink">Juno Moneta</b> — the Roman goddess whose temple
+        housed the mint (our word <em>money</em> comes from her). The app is her <b className="text-ink">temple
+        of wealth and spa of financial therapy</b>: a calm place to see the whole picture clearly and
+        leave steadier than you came. The look leans into that — warm parchment surfaces, a struck-coin
+        mark with a natural (uncropped) edge, a temple-garden that tracks the time of day, and one honest
+        voice. Every value below is a live CSS token, so this page recolors itself in day and night mode.
+      </p>
+
+      <H>Voice</H>
+      <p className="text-[13px] text-muted mb-2">Juno speaks to one person, in plain language.</p>
+      <Rule term="Warm, direct, no theatrics">No hype, no doom, no filler. Lead with the biggest lever; let real numbers do the settling.</Rule>
+      <Rule term="Honest reassurance only">Steadies nerves through truth — real distance to a feared outcome, benchmarks, the next step — never manufactured comfort, and never announced as reassurance.</Rule>
+      <Rule term="One light touch">At most one gently reassuring note per reply, only when the numbers earn it; if the truth is hard, it's said plainly with the next move.</Rule>
+      <Rule term="Never Yoda">Despite the repo's old codename, the persona is warm modern English — inverted Yoda cadence is permanently vetoed.</Rule>
+      <div className="rounded-xl border border-gold-line bg-card p-4 my-3">
+        <p className="voice text-[15px]" style={{ color: 'var(--ink)' }}>
+          “Evening. The month runs about <span className="n">$840</span> out at the current pace, with{' '}
+          <span className="n">14 months</span> of runway behind it. Nothing to fix tonight.”
+        </p>
+        <p className="text-[11px] text-muted mt-2">Her speech is set in Newsreader italic; money inside it stays Inter tabular.</p>
+      </div>
+
+      <H>Color, by meaning</H>
+      <p className="text-[13px] text-muted mb-2">
+        Color is semantic, never decorative. Three hues carry the whole system:
+      </p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-3">
+        <Swatch token="mint" name="Mint" role="Today — the live path, the real numbers" />
+        <Swatch token="gold" name="Gold" role="Hypothetical — what-if scenarios, and the brand metal" />
+        <Swatch token="amber-line" name="Amber" role="“Juno wants this number” — a data gap, not an error" />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <Pill family="amber">add balance</Pill>
+        <Pill family="amber">add rate</Pill>
+        <Pill family="gold">hypothetical</Pill>
+        <Pill family="mint">on track</Pill>
+        <span className="text-[11px] text-muted">— amber asks, gold marks a what-if, mint affirms.</span>
+      </div>
+      <p className="text-[13px] text-muted mb-1">Movement and surfaces:</p>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 my-3">
+        <Swatch token="up" name="Up" role="net worth rising" />
+        <Swatch token="down" name="Down" role="falling / underwater" />
+        <Swatch token="page" name="Page" role="parchment ground" />
+        <Swatch token="card" name="Card" role="raised surface" />
+        <Swatch token="sunken" name="Sunken" role="wells & insets" />
+        <Swatch token="ink" name="Ink" role="primary text" />
+      </div>
+
+      <H>Type</H>
+      <div className="rounded-xl border border-line bg-card p-4 my-3 space-y-3">
+        <div>
+          <p className="font-display font-semibold text-[30px] leading-none" style={{ color: 'var(--ink)' }}>Juno Moneta</p>
+          <p className="text-[11px] text-muted mt-1">Display — Cormorant Garamond, for mastheads and section heads.</p>
+        </div>
+        <div>
+          <p className="voice text-[16px]" style={{ color: 'var(--ink)' }}>She answers from the real numbers, and only the real numbers.</p>
+          <p className="text-[11px] text-muted mt-1">Voice — Newsreader, for everything Juno herself says.</p>
+        </div>
+        <div>
+          <p className="text-[14px]" style={{ color: 'var(--ink)' }}>Interface copy, labels, and body text are set in Inter.</p>
+          <p className="text-[11px] text-muted mt-1">Sans — Inter (variable).</p>
+        </div>
+        <div>
+          <p className="num text-[16px]" style={{ color: 'var(--ink)' }}>$348,717.00 · 4.63% · 14 mo</p>
+          <p className="text-[11px] text-muted mt-1">Numerals — Inter tabular figures, so columns of money align.</p>
+        </div>
+      </div>
+
+      <H>Mark & motifs</H>
+      <div className="flex items-center gap-4 rounded-xl border border-line bg-card p-4 my-3">
+        <img src={COIN_SM_SRC} alt="The Juno coin" width={64} height={64} className="shrink-0" />
+        <div>
+          <p className="text-[13px] text-ink font-medium">The coin</p>
+          <p className="text-[13px] text-muted">A struck coin with its natural, uneven edge — never circle-cropped. On good news it briefly beams gold rays. Motifs are Roman objects (coin, temple, garden), not generic fintech glyphs.</p>
+        </div>
+      </div>
+
+      <H>Components</H>
+      <div className="flex flex-wrap items-center gap-2.5 my-3">
+        <button type="button" className="btn-mint">Primary (mint)</button>
+        <button type="button" className="btn-gold">What-if (gold)</button>
+        <button type="button" className="btn-quiet">Quiet</button>
+        <input className="field" style={{ width: 160 }} placeholder="A field" readOnly />
+      </div>
+      <Rule term="Cards, rules, chips">Content sits on rounded cards over the parchment ground; definitions use a term-over-muted-description pattern (like this one); status reads through the three pill families above. Radii are soft (8–12px), borders are low-contrast lines, and gold is reserved for the hypothetical layer so it never competes with amber's “fill me in.”</Rule>
+    </>
+  )
+}
+
 export default function Help({ onClose }: { onClose: () => void }) {
+  const [pane, setPane] = useState<'works' | 'design'>('works')
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--page)' }}>
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-baseline justify-between">
-          <h1 className="font-display font-semibold text-[26px]">How Juno works</h1>
+          <h1 className="font-display font-semibold text-[26px]">{pane === 'works' ? 'How Juno works' : 'Design system'}</h1>
           <button type="button" onClick={onClose} className="btn-quiet">Close</button>
         </div>
-        <p className="text-[13.5px] text-muted mt-1">
+
+        <div className="flex gap-1 mt-3 mb-1 border-b border-line">
+          {([['works', 'How Juno works'], ['design', 'Design system']] as const).map(([id, label]) => (
+            <button key={id} type="button" onClick={() => setPane(id)}
+              className={`text-[13px] px-3 py-2 -mb-px border-b-2 ${pane === id ? 'border-mint text-ink font-medium' : 'border-transparent text-muted'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {pane === 'design' && <DesignSystem />}
+
+        {pane === 'works' && (<>
+        <p className="text-[13.5px] text-muted mt-3">
           The whole working model — every rule the numbers obey, what the advisor can see and do,
           and where to read more. Nothing here is hidden anywhere else; this page <em>is</em> the engine, written down.
         </p>
@@ -177,16 +312,16 @@ export default function Help({ onClose }: { onClose: () => void }) {
 
         <H>Privacy & plumbing</H>
         <p className="text-[13px] text-muted">
-          The data is this household's real finances and lives in its own private Supabase Postgres,
-          row-level-security locked to exactly two accounts (signups disabled). The browser talks to the
-          database directly; the only server code is the one function that carries the snapshot to Claude.
-          Frontend on Vercel at <A href="https://juno.andrewbaldock.com">juno.andrewbaldock.com</A>.
+          A household's finances live in their own private Supabase Postgres, row-level-security locked
+          to the household's members (signups disabled). The browser talks to the database directly; the
+          only server code is the one function that carries the snapshot to Claude.
           Every screen has its own address — <span className="num">/</span> (dashboard),{' '}
           <span className="num">/assets</span>, <span className="num">/payments</span>,{' '}
           <span className="num">/tasks</span>, and this page at <span className="num">/help</span> — so
-          anything can be bookmarked or shared between your two phones.
+          anything can be bookmarked or shared across devices.
         </p>
         <Rule term="Juno checks her own pulse">If something stops working — you're offline, the database won't answer, or the advisor can't be reached — a small card appears at the bottom of the screen saying which it is, and disappears on its own once things recover. Silence means everything is healthy.</Rule>
+        </>)}
 
         <div className="mt-8 mb-4">
           <button type="button" onClick={onClose} className="btn-mint">Back to {`Juno`}</button>
