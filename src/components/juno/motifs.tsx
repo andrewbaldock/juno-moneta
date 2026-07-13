@@ -29,7 +29,9 @@ export function MarkSavings() {
 export function MarkSpending() {
   return (
     <svg viewBox="0 0 24 24" className="mo" aria-hidden="true">
-      <path d="M9 4h6" /><path d="M10 4c-1 3-4.5 3.5-4.5 8S8 20 12 20s6.5-3.5 6.5-8S16 7 15 4" /><path d="M8 20h8" />
+      <circle cx="12" cy="12" r="8" />       {/* coin edge */}
+      <circle cx="12" cy="12" r="5.5" />     {/* raised rim */}
+      <path d="M12 9.4l1.4 2.6L12 14.6 10.6 12z" /> {/* small engraved emblem so it isn't a bare ring */}
     </svg>
   )
 }
