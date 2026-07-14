@@ -1,0 +1,15 @@
+project_id = "juno"
+
+# Pin edge-function auth in-repo so a redeploy can't silently flip it (M2).
+
+# claude-proxy holds ANTHROPIC_API_KEY — only signed-in household members may call it.
+# The separate DEMO project deliberately overrides this at deploy time with
+# `--no-verify-jwt` (the public demo has no auth; abuse is capped in-function + by
+# the demo key's billing cap). Never deploy the REAL claude-proxy without JWT.
+[functions.claude-proxy]
+verify_jwt = true
+
+# calendar-ics is fetched anonymously by Google/Apple Calendar; its auth is the
+# secret UUID token in the URL, validated in-function before any DB read.
+[functions.calendar-ics]
+verify_jwt = false
