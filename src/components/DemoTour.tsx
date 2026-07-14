@@ -1,18 +1,15 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { resetDemo } from '../lib/demo'
 
-// The public demo's guided tour. Opt in/out at any time: it opens itself once
-// on a first visit, then lives as a small "Take the tour" pill. Steps spotlight
-// a real element and float a Juno-voiced hint beside it; nothing is blocked —
-// the overlay is click-through, so a visitor can wander off and back anytime.
+// The public demo's guided tour — the UI walkthrough that follows the Welcome modal.
+// It starts on demand (the Welcome's "Take the tour" fires juno:tour, or the "Tour"
+// pill), never on its own. Steps spotlight a real element and float a Juno-voiced hint
+// beside it; nothing is blocked — the overlay is click-through, so a visitor can wander
+// off and back anytime.
 
 type Step = { sel?: string; title: string; body: string }
 
 const STEPS: Step[] = [
-  {
-    title: 'Welcome — this is Juno.',
-    body: "You're looking at the Rivera household: two working parents, two kids, a dog, and a completely made-up set of finances. Poke at anything — it resets when you reload. Shall I show you around?",
-  },
   {
     sel: '#c2',
     title: 'She opens with what matters.',
@@ -47,9 +44,11 @@ export function DemoTour() {
   const [i, setI] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
 
-  // open itself once, ever
+  // the Welcome modal (or the Tour pill) starts the walkthrough — never on its own
   useEffect(() => {
-    if (!localStorage.getItem('juno.tourSeen')) setRunning(true)
+    const go = () => start()
+    window.addEventListener('juno:tour', go)
+    return () => window.removeEventListener('juno:tour', go)
   }, [])
 
   const step = STEPS[i]
@@ -76,10 +75,7 @@ export function DemoTour() {
   }, [running, i, step.sel])
 
   function start() { setI(0); setRunning(true) }
-  function finish() {
-    setRunning(false)
-    localStorage.setItem('juno.tourSeen', '1')
-  }
+  function finish() { setRunning(false) }
   const next = () => (i + 1 < STEPS.length ? setI(i + 1) : finish())
   const back = () => setI(Math.max(0, i - 1))
 
@@ -98,14 +94,20 @@ export function DemoTour() {
 
   return (
     <>
-      {/* persistent pill — start or reset at any time */}
+      {/* persistent pills — reopen the welcome, restart the tour, or reset, at any time */}
       <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2">
         {!running && (
-          <button type="button" onClick={start}
-            className="flex items-center gap-1.5 bg-card border border-line rounded-full pl-3 pr-3.5 py-1.5 shadow-lg text-[12.5px] hover:border-mint-line transition-colors">
-            <span className="text-gold-ink">✦</span>
-            <span className="font-medium">{localStorage.getItem('juno.tourSeen') ? 'Tour' : 'Take the tour'}</span>
-          </button>
+          <>
+            <button type="button" onClick={() => window.dispatchEvent(new Event('juno:welcome'))}
+              className="flex items-center gap-1.5 bg-card border border-line rounded-full pl-3 pr-3.5 py-1.5 shadow-lg text-[12.5px] hover:border-mint-line transition-colors">
+              <span className="text-gold-ink">✦</span>
+              <span className="font-medium">Welcome</span>
+            </button>
+            <button type="button" onClick={start}
+              className="bg-card border border-line rounded-full px-3 py-1.5 shadow-lg text-[12.5px] text-muted hover:text-ink transition-colors">
+              Tour
+            </button>
+          </>
         )}
         <button type="button" onClick={resetDemo}
           className="bg-card border border-line rounded-full px-3 py-1.5 shadow-lg text-[12.5px] text-muted hover:text-ink transition-colors"

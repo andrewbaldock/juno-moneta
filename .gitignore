@@ -26,3 +26,6 @@ dist-ssr
 .vercel
 .env*
 supabase/.temp/
+
+# Storybook build output
+storybook-static/

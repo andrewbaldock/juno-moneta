@@ -3,19 +3,21 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import { DEMO, DEMO_SESSION } from './lib/demo'
 import { DemoTour } from './components/DemoTour'
+import { DemoWelcome } from './components/DemoWelcome'
 import Accounts from './screens/Accounts'
 import CashFlows from './screens/CashFlows'
 import Dashboard from './screens/Dashboard'
 import Tasks from './screens/Tasks'
 import Estate from './screens/Estate'
 import Help from './screens/Help'
+import Design from './screens/Design'
 import { useAdvisor, ConvoRail, ConvoThread } from './screens/Advisor'
 import JunoPresence from './components/juno/JunoPresence'
 import { UpdateToast } from './components/UpdateToast'
 import { HealthToast } from './components/HealthToast'
 import { COIN_SRC, Moon, Sun } from './components/juno/motifs'
 import { annualReviewTask, checklistTasks, loadDone } from './lib/tasks'
-import { firstName, juno, peopleList, type HouseholdSettings } from './copy/juno'
+import { firstName, juno, peopleList, welcome, type HouseholdSettings } from './copy/juno'
 import { APP_NAME } from './brand'
 
 export default function App() {
@@ -41,6 +43,10 @@ export default function App() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
+  // /design and /help are public reference pages — reachable with no login, before the auth gate.
+  // (When signed in, the ? button still opens Help as an in-app overlay without a reload.)
+  if (location.pathname === '/design') return <Design />
+  if (location.pathname === '/help') return <Help onClose={() => { window.location.href = '/' }} />
   if (!ready) return null
   if (session && recovery) return <RecoverPassword onDone={() => setRecovery(false)} />
   return (
@@ -48,6 +54,7 @@ export default function App() {
       {session ? <Home session={session} /> : <Login />}
       <UpdateToast />
       <HealthToast signedIn={!!session} />
+      {DEMO && <DemoWelcome />}
       {DEMO && <DemoTour />}
     </>
   )
@@ -401,6 +408,11 @@ function Shell({
               </button>
             ))}
             <span className="sp" />
+            {DEMO && (
+              <span className="pchip" title="The Rivera household and every number here are fictional, made up to explore.">
+                {welcome.fictionChip}
+              </span>
+            )}
             <WhoMenu userName={userName} />
             <button type="button" className="modebtn" aria-label="How Juno works" title="How Juno works"
               onClick={openHelp}>

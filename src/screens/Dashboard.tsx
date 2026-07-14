@@ -196,7 +196,7 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
  * Segments alternate two validated shades per side; identity rides on direct labels
  * for wide segments, native tooltips for all, and the table view underneath.
  */
-function CompositionBars({ accounts }: { accounts: Account[] }) {
+export function CompositionBars({ accounts }: { accounts: Account[] }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [tip, setTip] = useState<{ x: number; y: number; text: string } | null>(null)
   const known = accounts.filter((a) => a.balance_cents !== null && (a.balance_cents as number) > 0)
@@ -346,7 +346,7 @@ function ShelfEditor({ householdId, shelfCents, setShelfCents }: {
   )
 }
 
-function AccountCard({ mark, name, balance, whisper, hover }: {
+export function AccountCard({ mark, name, balance, whisper, hover }: {
   mark: React.ReactNode; name: string; balance: string; whisper?: string; hover?: React.ReactNode
 }) {
   return (
@@ -376,7 +376,7 @@ function IncomeMonthsList({ months }: { months: { label: string; cents: number }
 }
 
 /** Single-series line via Recharts — same system as the scenario chart. Mint = the live layer, gold = the shelf. */
-function LineChart({ points, showZero = false, floor = 0 }: { points: { label: string; cents: number }[]; showZero?: boolean; floor?: number }) {
+export function LineChart({ points, showZero = false, floor = 0 }: { points: { label: string; cents: number }[]; showZero?: boolean; floor?: number }) {
   const firstNeg = showZero ? points.find((p) => p.cents <= floor) : undefined
   return (
     <div>

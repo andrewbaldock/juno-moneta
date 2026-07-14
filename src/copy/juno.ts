@@ -148,6 +148,54 @@ export const juno = {
   keptEachMonth: 'Kept each month, at current pace',
 }
 
+/** The demo's front door — a warm, diagram-led welcome. Speaks to one visitor ("you").
+ *  Honesty guardrails hold: the anti-hallucination story is the *architecture*, never a
+ *  promise the model can't keep; the legal figures are "current and dated", not "real-time". */
+export const welcome = {
+  eyebrow: 'Welcome',
+  title: 'This is Juno.',
+  lede:
+    "A private financial companion for one household — she holds the whole picture and helps you think it through, out loud, in plain language.",
+  fiction:
+    "You're looking at the Rivera household: two working parents, two kids, a dog, and an entirely fictional set of finances, made up for you to explore. Poke at anything — it resets when you reload.",
+
+  // Each beat pairs a short warm paragraph with one of the shared diagrams.
+  beats: [
+    {
+      key: 'talk',
+      title: 'You just talk to her',
+      body: "Ask a plain question or run a what-if — “can we afford a bigger place?”, “what if one of us lost their job?” — and she answers from the real numbers, then keeps the ledger up to date for you.",
+    },
+    {
+      key: 'grow',
+      title: 'You grow sharper together',
+      body: "The more you tell her, the better she sees. She notices what's missing and asks for it — and every number you add makes the next answer sharper. A picture that fills itself in.",
+    },
+    {
+      key: 'act',
+      title: 'She can actually act',
+      body: "Juno reaches your finances only through a small set of tools — read the picture, add or update a row, project a scenario, remember a note. Every call runs scoped to your household, with dollars at the boundary and no master key in reach.",
+    },
+    {
+      key: 'ground',
+      title: 'Grounded, not guessing',
+      body: "The math is done in code, never in her head. Her answers come back structured, the app recomputes every figure itself, and anything unknown is shown as unknown — never quietly guessed as zero. She's built on current, dated tax and legal figures.",
+    },
+    {
+      key: 'build',
+      title: 'She helps build herself',
+      body: "When Juno finds a gap in what she can hold — a missing number, a missing row, even a missing feature — she files it as a task. The app, in effect, asks for its own next improvement.",
+    },
+  ],
+
+  tourCta: 'Take the tour',
+  helpCta: 'How Juno works',
+  dismiss: 'Got it — let me in',
+
+  /** The persistent marker that outlives the modal. */
+  fictionChip: 'Fictional demo data',
+}
+
 /** The proactive-open moments — she has already looked (05-system-notes.md §1).
  *  Truth first; the reassuring clause only appears when the numbers earn it. */
 export const moments = {

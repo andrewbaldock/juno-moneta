@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "smoke": "bun scripts/smoke.ts"
+    "smoke": "bun scripts/smoke.ts",
+    "storybook": "VITE_DEMO=true storybook dev -p 6006",
+    "build-storybook": "VITE_DEMO=true storybook build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -21,12 +23,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@storybook/react-vite": "^10.5.0",
     "@types/bun": "^1.3.14",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "storybook": "^10.5.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
   }

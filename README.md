@@ -7,7 +7,8 @@ with scenario timelines. It also keeps its own ledger: the advisor can add, upda
 correct rows as a conversation establishes new facts, and file "app gap" tasks when the
 data model is missing something.
 
-**Live demo:** _(coming soon — a fully fictional household)_
+**Live demo:** https://juno-demo.andrewbaldock.com — a fully fictional household, no login.
+**Design system:** https://juno.andrewbaldock.com/design — tokens, type, motifs, diagrams, and the live components.
 
 > This is the public source. A private instance runs a real household; that data lives only
 > in its database behind auth, never in this repo. Everything household-specific — member

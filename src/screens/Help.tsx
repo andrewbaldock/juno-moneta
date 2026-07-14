@@ -3,7 +3,7 @@
 // Two sub-tabs: "How Juno works" (the model) and "Design system" (the visual language).
 import { useState } from 'react'
 import { LIQUID_CATEGORIES } from '../lib/metrics'
-import { COIN_SM_SRC } from '../components/juno/motifs'
+import { FlowDiagram, LoopDiagram } from '../components/juno/diagrams'
 
 const REPO = 'https://github.com/andrewbaldock/juno-moneta'
 
@@ -24,179 +24,23 @@ function A({ href, children }: { href: string; children: React.ReactNode }) {
   return <a href={href} target="_blank" rel="noreferrer" className="text-mint-ink underline decoration-mint-line underline-offset-2">{children}</a>
 }
 
-/** Ledger → engine → numbers, in three boxes. */
-function FlowDiagram() {
-  const box = { fill: 'var(--sunken)', stroke: 'var(--line-strong)', rx: 10 }
-  const label = { fontSize: 12, fill: 'var(--ink)', fontFamily: 'var(--sans)' }
-  const small = { fontSize: 10, fill: 'var(--muted)', fontFamily: 'var(--sans)' }
-  const arrow = { stroke: 'var(--gold)', strokeWidth: 1.5, markerEnd: 'url(#arr)' }
-  return (
-    <svg viewBox="0 0 640 120" className="w-full max-w-xl my-3" role="img" aria-label="The ledger feeds the engine, the engine produces every number on screen">
-      <defs>
-        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0,0 L8,4 L0,8" fill="none" stroke="var(--gold)" strokeWidth="1.5" />
-        </marker>
-      </defs>
-      <rect x="8" y="24" width="170" height="72" {...box} />
-      <text x="93" y="52" textAnchor="middle" {...label}>The ledger</text>
-      <text x="93" y="70" textAnchor="middle" {...small}>accounts · cash flows · shelf</text>
-      <text x="93" y="84" textAnchor="middle" {...small}>integer cents, null = unknown</text>
-      <line x1="182" y1="60" x2="230" y2="60" {...arrow} />
-      <rect x="234" y="24" width="170" height="72" {...box} />
-      <text x="319" y="52" textAnchor="middle" {...label}>The engine</text>
-      <text x="319" y="70" textAnchor="middle" {...small}>pure functions, month by month</text>
-      <text x="319" y="84" textAnchor="middle" {...small}>src/lib/metrics.ts</text>
-      <line x1="408" y1="60" x2="456" y2="60" {...arrow} />
-      <rect x="460" y="24" width="172" height="72" {...box} />
-      <text x="546" y="52" textAnchor="middle" {...label}>Every number shown</text>
-      <text x="546" y="70" textAnchor="middle" {...small}>runway · payoffs · net worth</text>
-      <text x="546" y="84" textAnchor="middle" {...small}>charts recompute locally</text>
-    </svg>
-  )
-}
-
-/** The advisor loop: snapshot out, structured reply back, app does the math. */
-function LoopDiagram() {
-  const box = { fill: 'var(--sunken)', stroke: 'var(--line-strong)', rx: 10 }
-  const label = { fontSize: 12, fill: 'var(--ink)', fontFamily: 'var(--sans)' }
-  const small = { fontSize: 10, fill: 'var(--muted)', fontFamily: 'var(--sans)' }
-  return (
-    <svg viewBox="0 0 640 150" className="w-full max-w-xl my-3" role="img" aria-label="The app sends Juno a snapshot; Juno returns structured advice; the app verifies and applies it">
-      <defs>
-        <marker id="arr2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0,0 L8,4 L0,8" fill="none" stroke="var(--gold)" strokeWidth="1.5" />
-        </marker>
-      </defs>
-      <rect x="8" y="40" width="200" height="72" {...box} />
-      <text x="108" y="66" textAnchor="middle" {...label}>The app</text>
-      <text x="108" y="84" textAnchor="middle" {...small}>snapshot: names + dollars only,</text>
-      <text x="108" y="98" textAnchor="middle" {...small}>today's real date, memory notes</text>
-      <path d="M 212 62 C 290 30, 350 30, 426 62" fill="none" stroke="var(--gold)" strokeWidth="1.5" markerEnd="url(#arr2)" />
-      <text x="320" y="34" textAnchor="middle" {...small}>question + snapshot</text>
-      <rect x="430" y="40" width="202" height="72" {...box} />
-      <text x="531" y="66" textAnchor="middle" {...label}>Juno (Claude Sonnet 5)</text>
-      <text x="531" y="84" textAnchor="middle" {...small}>one edge function; the API key</text>
-      <text x="531" y="98" textAnchor="middle" {...small}>never reaches the browser</text>
-      <path d="M 426 96 C 350 128, 290 128, 212 96" fill="none" stroke="var(--gold)" strokeWidth="1.5" markerEnd="url(#arr2)" />
-      <text x="320" y="140" textAnchor="middle" {...small}>reply + actions + scenario deltas + ledger edits — the app recomputes ALL math itself</text>
-    </svg>
-  )
-}
-
-/** A single design token, shown as its color over a labelled caption. */
-function Swatch({ token, name, role }: { token: string; name: string; role: string }) {
-  return (
-    <div className="rounded-lg border border-line overflow-hidden bg-card">
-      <div className="h-11" style={{ background: `var(--${token})` }} />
-      <div className="px-2.5 py-1.5">
-        <p className="text-[12px] font-medium text-ink">{name}</p>
-        <p className="text-[11px] text-muted leading-snug">{role}</p>
-      </div>
-    </div>
-  )
-}
-
-/** A status pill in one of the three semantic families (soft bg / ink text / line border). */
-function Pill({ family, children }: { family: 'amber' | 'gold' | 'mint'; children: React.ReactNode }) {
-  return (
-    <span className="text-[11px] rounded-full px-2.5 py-0.5 border"
-      style={{ background: `var(--${family}-soft)`, color: `var(--${family}-ink)`, borderColor: `var(--${family}-line)` }}>
-      {children}
-    </span>
-  )
-}
-
-/** The visual language — Juno Moneta, in tokens you can see. Everything reads from the
- *  same CSS variables the app uses, so this page recolors itself in light and dark. */
+/** The design system now lives at its own public page, /design. This pane is a short
+ *  pointer to it, so the deep showcase has a single home and can't drift out of sync. */
 function DesignSystem() {
   return (
     <>
-      <p className="text-[13px] text-muted mb-2">
+      <p className="text-[13px] text-muted mt-3 mb-3">
         Juno is named for <b className="text-ink">Juno Moneta</b> — the Roman goddess whose temple
         housed the mint (our word <em>money</em> comes from her). The app is her <b className="text-ink">temple
-        of wealth and spa of financial therapy</b>: a calm place to see the whole picture clearly and
-        leave steadier than you came. The look leans into that — warm parchment surfaces, a struck-coin
-        mark with a natural (uncropped) edge, a temple-garden that tracks the time of day, and one honest
-        voice. Every value below is a live CSS token, so this page recolors itself in day and night mode.
+        and spa of financial wellbeing</b>: warm parchment surfaces, a struck-coin mark with its natural
+        edge, a temple garden that tracks the time of day, gold for the coin and a soothing mint for the
+        plants, and one honest voice.
       </p>
-
-      <H>Voice</H>
-      <p className="text-[13px] text-muted mb-2">Juno speaks to one person, in plain language.</p>
-      <Rule term="Warm, direct, no theatrics">No hype, no doom, no filler. Lead with the biggest lever; let real numbers do the settling.</Rule>
-      <Rule term="Honest reassurance only">Steadies nerves through truth — real distance to a feared outcome, benchmarks, the next step — never manufactured comfort, and never announced as reassurance.</Rule>
-      <Rule term="One light touch">At most one gently reassuring note per reply, only when the numbers earn it; if the truth is hard, it's said plainly with the next move.</Rule>
-      <Rule term="Never Yoda">Despite the repo's old codename, the persona is warm modern English — inverted Yoda cadence is permanently vetoed.</Rule>
-      <div className="rounded-xl border border-gold-line bg-card p-4 my-3">
-        <p className="voice text-[15px]" style={{ color: 'var(--ink)' }}>
-          “Evening. The month runs about <span className="n">$840</span> out at the current pace, with{' '}
-          <span className="n">14 months</span> of runway behind it. Nothing to fix tonight.”
-        </p>
-        <p className="text-[11px] text-muted mt-2">Her speech is set in Newsreader italic; money inside it stays Inter tabular.</p>
-      </div>
-
-      <H>Color, by meaning</H>
-      <p className="text-[13px] text-muted mb-2">
-        Color is semantic, never decorative. Three hues carry the whole system:
+      <p className="text-[13px] text-muted mb-4">
+        The full design system — colour tokens, type, motifs, diagrams, and components, with a live
+        day/night toggle — is a public page:
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-3">
-        <Swatch token="mint" name="Mint" role="Today — the live path, the real numbers" />
-        <Swatch token="gold" name="Gold" role="Hypothetical — what-if scenarios, and the brand metal" />
-        <Swatch token="amber-line" name="Amber" role="“Juno wants this number” — a data gap, not an error" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <Pill family="amber">add balance</Pill>
-        <Pill family="amber">add rate</Pill>
-        <Pill family="gold">hypothetical</Pill>
-        <Pill family="mint">on track</Pill>
-        <span className="text-[11px] text-muted">— amber asks, gold marks a what-if, mint affirms.</span>
-      </div>
-      <p className="text-[13px] text-muted mb-1">Movement and surfaces:</p>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 my-3">
-        <Swatch token="up" name="Up" role="net worth rising" />
-        <Swatch token="down" name="Down" role="falling / underwater" />
-        <Swatch token="page" name="Page" role="parchment ground" />
-        <Swatch token="card" name="Card" role="raised surface" />
-        <Swatch token="sunken" name="Sunken" role="wells & insets" />
-        <Swatch token="ink" name="Ink" role="primary text" />
-      </div>
-
-      <H>Type</H>
-      <div className="rounded-xl border border-line bg-card p-4 my-3 space-y-3">
-        <div>
-          <p className="font-display font-semibold text-[30px] leading-none" style={{ color: 'var(--ink)' }}>Juno Moneta</p>
-          <p className="text-[11px] text-muted mt-1">Display — Cormorant Garamond, for mastheads and section heads.</p>
-        </div>
-        <div>
-          <p className="voice text-[16px]" style={{ color: 'var(--ink)' }}>She answers from the real numbers, and only the real numbers.</p>
-          <p className="text-[11px] text-muted mt-1">Voice — Newsreader, for everything Juno herself says.</p>
-        </div>
-        <div>
-          <p className="text-[14px]" style={{ color: 'var(--ink)' }}>Interface copy, labels, and body text are set in Inter.</p>
-          <p className="text-[11px] text-muted mt-1">Sans — Inter (variable).</p>
-        </div>
-        <div>
-          <p className="num text-[16px]" style={{ color: 'var(--ink)' }}>$348,717.00 · 4.63% · 14 mo</p>
-          <p className="text-[11px] text-muted mt-1">Numerals — Inter tabular figures, so columns of money align.</p>
-        </div>
-      </div>
-
-      <H>Mark & motifs</H>
-      <div className="flex items-center gap-4 rounded-xl border border-line bg-card p-4 my-3">
-        <img src={COIN_SM_SRC} alt="The Juno coin" width={64} height={64} className="shrink-0" />
-        <div>
-          <p className="text-[13px] text-ink font-medium">The coin</p>
-          <p className="text-[13px] text-muted">A struck coin with its natural, uneven edge — never circle-cropped. On good news it briefly beams gold rays. Motifs are Roman objects (coin, temple, garden), not generic fintech glyphs.</p>
-        </div>
-      </div>
-
-      <H>Components</H>
-      <div className="flex flex-wrap items-center gap-2.5 my-3">
-        <button type="button" className="btn-mint">Primary (mint)</button>
-        <button type="button" className="btn-gold">What-if (gold)</button>
-        <button type="button" className="btn-quiet">Quiet</button>
-        <input className="field" style={{ width: 160 }} placeholder="A field" readOnly />
-      </div>
-      <Rule term="Cards, rules, chips">Content sits on rounded cards over the parchment ground; definitions use a term-over-muted-description pattern (like this one); status reads through the three pill families above. Radii are soft (8–12px), borders are low-contrast lines, and gold is reserved for the hypothetical layer so it never competes with amber's “fill me in.”</Rule>
+      <a href="/design" className="btn-mint inline-block no-underline">Open the full design system →</a>
     </>
   )
 }
