@@ -143,6 +143,18 @@ Financial-correctness controls that matter for a money app's trustworthiness:
   people's data, it would need: documented data-subject access/erasure, processor
   agreements (DPAs) with Supabase/Vercel/Anthropic, and a public privacy policy.
 
+## 9a. The public demo (`VITE_DEMO=true`)
+
+The public demo carries **no real personal data**. It runs the same code against an in-memory
+fixture — the fictional Rivera household — with **no Supabase reads or writes** (all data is
+client-side and resets on reload), so there is nothing shared for a visitor to read or corrupt.
+Auth is bypassed (no accounts, no credentials). The only outbound surface is the advisor, which
+in the deployed demo is a **separate demo Supabase project** hosting a rate-limited, capped-key
+`claude-proxy` (`verify_jwt` off, Haiku) — the real project's `ANTHROPIC_API_KEY` and real
+household data are never reachable from the demo. The health probe is stubbed locally and the
+calendar feed (§6) is inert (no token issued). See [`architecture.md`](architecture.md) → Demo
+mode. *Owner-gated: standing up the demo project + capped key.*
+
 ## 10. Known gaps / roadmap
 
 - **No automated erasure/retention workflow** — deletion is manual/cascade only.

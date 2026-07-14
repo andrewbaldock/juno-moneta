@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import { DEMO, DEMO_SESSION } from './lib/demo'
+import { DemoTour } from './components/DemoTour'
 import Accounts from './screens/Accounts'
 import CashFlows from './screens/CashFlows'
 import Dashboard from './screens/Dashboard'
@@ -27,6 +29,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (DEMO) { setSession(DEMO_SESSION); setReady(true); return }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setReady(true)
@@ -45,6 +48,7 @@ export default function App() {
       {session ? <Home session={session} /> : <Login />}
       <UpdateToast />
       <HealthToast signedIn={!!session} />
+      {DEMO && <DemoTour />}
     </>
   )
 }

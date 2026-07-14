@@ -192,6 +192,33 @@ of the deployed runtime; registered via a repo-root `.mcp.json`.
 law shape-guard, tasks) and the ICS builder. UI and Supabase-touching code are verified by
 browser passes and `scripts/smoke.ts`, not mock-heavy unit tests.
 
+## Demo mode (`VITE_DEMO=true`)
+
+The public demo is the **same codebase** differentiated only by an env flag. When
+`VITE_DEMO` is set:
+
+- **No Supabase.** `src/lib/demo.ts` holds an in-memory store seeded from a fixture — the
+  fully-fictional **Rivera household** (net worth, monthly in/out, and runway all reconcile).
+  `src/lib/supabase.ts` wraps the client in a `Proxy`: `.from(table)` returns a tiny
+  query-builder shim (`select/insert/update/delete/eq/order/limit/single/not/ilike`, chainable
+  + thenable, mutations auto-run so fire-and-forget writes still take effect) over that store.
+  Every screen is unchanged. Writes mutate the session copy only; **a reload re-seeds**, so a
+  visitor can add/edit/delete freely and nothing shared can be corrupted.
+- **Auth bypassed.** `App.tsx` short-circuits the session gate with a synthetic `DEMO_SESSION`
+  (no `<Login>`).
+- **Outbound neutralized.** The health probe (`functions.invoke('claude-proxy',{health:true})`)
+  is answered by a local stub; `settings.calendar` is unset so the ICS/embed surface is inert;
+  `/version.json` is same-origin. The **advisor stays live**: `functions.invoke('claude-proxy')`
+  passes through to the *ambient* project — in the deployed demo that is a **separate,
+  rate-limited demo Supabase project** (its own capped key, `verify_jwt` off, Haiku), never the
+  real one. (Against the real project locally it 401s harmlessly.)
+- **Guided tour.** `src/components/DemoTour.tsx` — an opt-in/out spotlight tour (self-opens once,
+  then a persistent "Take the tour" pill), plus a "Reset demo" control. No tour dependency.
+
+**Owner-gated remainder:** the demo Supabase project + capped Anthropic key (for the live
+rate-limited advisor), a `juno-demo` Vercel project on the same repo with `VITE_DEMO=true` +
+demo project URL/anon, and DNS for `juno-demo.andrewbaldock.com`.
+
 ## Known gaps / roadmap
 
 - **Multi-state law needs the household address.** `law.ts` is currently hardcoded to
