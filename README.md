@@ -49,6 +49,15 @@ VITE_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
+## Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) — how the system fits together (frontend,
+  data model, RLS, edge functions, the advisor loop, build & deploy).
+- [`docs/compliance.md`](docs/compliance.md) — data inventory, access control, third-party
+  processors, and what does / doesn't cross the Anthropic boundary.
+- [`docs/architecture.svg`](docs/architecture.svg) — system diagram
+  ([`.drawio`](docs/architecture.drawio) source).
+
 ## Commands (uses [Bun](https://bun.sh))
 
 ```
