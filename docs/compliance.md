@@ -4,7 +4,8 @@ Juno handles sensitive household financial data. This document inventories that 
 it lives, who can reach it, and which third parties process it — so the security and privacy
 posture is explicit rather than assumed. It is written against the actual code
 (`supabase/migrations/`, the two edge functions, `src/lib/`); when they change, this doc
-changes with them.
+changes with them. For the engineering controls that enforce these boundaries — RLS, the edge
+functions, the LLM/secret boundary, encryption — see [`security.md`](security.md).
 
 **Nature of the app.** Juno is a *personal / single-household* financial planner. It stores
 **no bank credentials, no full account numbers, no payment card data, and moves no money.**

@@ -6,7 +6,9 @@ runway, and debt-payoff dates locally, and embeds a Claude-powered advisor that 
 what-if questions against the real numbers. This document describes how the system is
 put together. For the *rules* the engine obeys (money as cents, NULL = unknown, additive
 migrations, the advisor never does verifiable math), see [`README.md`](../README.md) —
-those invariants are law and are not repeated in full here.
+those invariants are law and are not repeated in full here. For the security posture (trust
+boundaries, RLS, the LLM/secret boundary, encryption) see [`security.md`](security.md); for
+data protection and third parties see [`compliance.md`](compliance.md).
 
 > **Diagram:** [`architecture.svg`](architecture.svg) (view) · [`architecture.drawio`](architecture.drawio) (editable source, open at [draw.io](https://app.diagrams.net)).
 
