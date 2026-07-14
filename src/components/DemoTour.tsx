@@ -95,7 +95,7 @@ export function DemoTour() {
   return (
     <>
       {/* persistent pills — reopen the welcome, restart the tour, or reset, at any time */}
-      <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2">
+      <div className="fixed top-20 right-4 z-40 flex flex-wrap justify-end items-center gap-2">
         {!running && (
           <>
             <button type="button" onClick={() => window.dispatchEvent(new Event('juno:welcome'))}

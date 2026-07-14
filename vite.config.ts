@@ -7,9 +7,14 @@ import { APP_NAME } from './src/brand.ts'
 // long-lived tab can tell when a newer deploy is live.
 const buildId = Date.now().toString()
 
+// Same codebase, two apps: `bun run dev` = the real app for Anne & Andrew (5181);
+// `VITE_DEMO=true bun run dev` = the recruiter demo (5182). Separate ports so both
+// can run at once — no more 5181 collision. See the canonical port map.
+const DEMO = process.env.VITE_DEMO === 'true'
+
 export default defineConfig({
-  // Fixed port so the SwiftBar control panel can find it — 5181 per the canonical port map.
-  server: { port: 5181, strictPort: true },
+  // Fixed port so the SwiftBar control panel can find it — per the canonical port map.
+  server: { port: DEMO ? 5182 : 5181, strictPort: true },
   define: { __BUILD_ID__: JSON.stringify(buildId) },
   plugins: [
     react(),

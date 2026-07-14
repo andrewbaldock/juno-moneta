@@ -170,6 +170,7 @@ export default function Help({ onClose }: { onClose: () => void }) {
         <div className="mt-8 mb-4">
           <button type="button" onClick={onClose} className="btn-mint">Back to {`Juno`}</button>
         </div>
+        <p className="text-[12.5px] text-muted mb-4">Built by <A href="https://andrewbaldock.com">andrewbaldock.com</A></p>
       </div>
     </div>
   )
