@@ -9,6 +9,7 @@ data model is missing something.
 
 **Live demo:** https://juno-demo.andrewbaldock.com — a fully fictional household, no login.
 **Design system:** https://juno.andrewbaldock.com/design — tokens, type, motifs, diagrams, and the live components.
+**Storybook:** https://juno-storybook.andrewbaldock.com — the component explorer.
 
 > This is the public source. A private instance runs a real household; that data lives only
 > in its database behind auth, never in this repo. Everything household-specific — member

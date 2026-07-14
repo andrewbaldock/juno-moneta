@@ -7,6 +7,9 @@ const preview: Preview = {
   parameters: {
     layout: 'centered',
     controls: { expanded: true },
+    options: {
+      storySort: { order: ['Juno', ['Overview', 'Diagrams', 'Motifs', 'Workspace', 'Components']] },
+    },
   },
   globalTypes: {
     mode: {

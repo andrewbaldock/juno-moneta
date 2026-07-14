@@ -270,6 +270,7 @@ export default function Design() {
         <div className="mt-12 mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
           <a href="/" className="btn-mint">Enter {APP_NAME} →</a>
           <a href="/help" className="text-[12.5px] text-mint-ink underline decoration-mint-line underline-offset-2">How Juno works</a>
+          <a href="https://juno-storybook.andrewbaldock.com" target="_blank" rel="noreferrer" className="text-[12.5px] text-mint-ink underline decoration-mint-line underline-offset-2">Storybook</a>
           <a href="https://andrewbaldock.com" target="_blank" rel="noreferrer" className="text-[12.5px] text-mint-ink underline decoration-mint-line underline-offset-2">Portfolio</a>
           <a href="https://github.com/andrewbaldock/juno-moneta" target="_blank" rel="noreferrer" className="text-[12.5px] text-mint-ink underline decoration-mint-line underline-offset-2">The code</a>
         </div>
