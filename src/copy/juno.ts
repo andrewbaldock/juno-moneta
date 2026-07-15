@@ -155,36 +155,36 @@ export const welcome = {
   eyebrow: 'Welcome',
   title: 'This is Juno.',
   lede:
-    "A private financial companion for one household — she holds the whole picture and helps you think it through, out loud, in plain language.",
+    "A private financial companion for one household — she holds the whole picture and helps you think it through, in plain language.",
   fiction:
-    "You're looking at the Rivera household: two working parents, two kids, a dog, and an entirely fictional set of finances, made up for you to explore. Poke at anything — it resets when you reload.",
+    "This is the fictional Rivera household — two parents, two kids, a dog, made-up finances for you to explore. Poke at anything; it resets when you reload.",
 
-  // Each beat pairs a short warm paragraph with one of the shared diagrams.
+  // Each beat pairs a short warm line with one of the shared diagrams (one slide each).
   beats: [
     {
       key: 'talk',
       title: 'You just talk to her',
-      body: "Ask a plain question or run a what-if — “can we afford a bigger place?”, “what if one of us lost their job?” — and she answers from the real numbers, then keeps the ledger up to date for you.",
+      body: "Ask a plain question or a what-if — “can we afford a bigger place?”, “what if one of us lost their job?” — and she answers from the real numbers.",
     },
     {
       key: 'grow',
       title: 'You grow sharper together',
-      body: "The more you tell her, the better she sees. She notices what's missing and asks for it — and every number you add makes the next answer sharper. A picture that fills itself in.",
+      body: "The more you tell her, the better she sees. She asks for what's missing, and every number you add makes the next answer sharper.",
     },
     {
       key: 'act',
       title: 'She can actually act',
-      body: "Juno reaches your finances only through a small set of tools — read the picture, add or update a row, project a scenario, remember a note. Every call runs scoped to your household, with dollars at the boundary and no master key in reach.",
+      body: "Juno reaches your finances only through a small set of tools — read, add or update a row, project a scenario. Every call is scoped to your household, with no master key in reach.",
     },
     {
       key: 'ground',
       title: 'Grounded, not guessing',
-      body: "The math is done in code, never in her head. Her answers come back structured, the app recomputes every figure itself, and anything unknown is shown as unknown — never quietly guessed as zero. She's built on current, dated tax and legal figures.",
+      body: "The math is done in code, never in her head. Answers come back structured, the app recomputes every figure, and anything unknown is shown as unknown — built on current, dated tax and legal figures.",
     },
     {
       key: 'build',
       title: 'She helps build herself',
-      body: "When Juno finds a gap in what she can hold — a missing number, a missing row, even a missing feature — she files it as a task. The app, in effect, asks for its own next improvement.",
+      body: "Find a gap in what she can hold — a missing number, row, even a feature — and she files it as a task. The app asks for its own next improvement.",
     },
   ],
 

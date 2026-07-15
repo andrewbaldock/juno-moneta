@@ -282,20 +282,19 @@ body {
 dialog.jd { border: 1px solid var(--line); border-radius: 16px; background: var(--card); color: var(--ink); padding: 0 }
 dialog.jd::backdrop { background: rgba(20, 16, 9, .35) }
 
-/* the demo welcome — a tall, scrollable front-door modal (inset+margin:auto re-centers it,
-   since Tailwind preflight strips the UA dialog margin that normally centers modals) */
+/* the demo welcome — a fixed-height, slide-driven front-door modal (inset+margin:auto
+   re-centers it, since Tailwind preflight strips the UA dialog margin). One slide shows
+   at a time inside a fixed frame; the footer is pinned — no page scroll. */
 dialog.welcome-dlg { position: fixed; inset: 0; margin: auto; width: min(640px, 92vw);
-  max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(60, 44, 16, .28);
-  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent }
-dialog.welcome-dlg::-webkit-scrollbar { width: 12px }
-dialog.welcome-dlg::-webkit-scrollbar-track { background: transparent }
-dialog.welcome-dlg::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px;
-  border: 4px solid var(--card) }
-dialog.welcome-dlg::-webkit-scrollbar-thumb:hover { background: var(--faint) }
+  height: min(560px, 88vh); overflow: hidden; box-shadow: 0 24px 70px rgba(60, 44, 16, .28) }
 dialog.welcome-dlg[open] { animation: welcome-in .28s cubic-bezier(.2, .7, .3, 1) }
 dialog.welcome-dlg::backdrop { background: rgba(20, 16, 9, .5); backdrop-filter: blur(2px) }
-.welcome-body { padding: 30px 30px 26px }
+.welcome-body { height: 100%; padding: 30px 30px 22px; display: flex; flex-direction: column }
+/* the current slide — flexes to fill, its content vertically centered, never scrolls */
+.welcome-slide { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column;
+  justify-content: center; animation: slide-in .26s cubic-bezier(.2, .7, .3, 1) }
 @keyframes welcome-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+@keyframes slide-in { from { opacity: 0; transform: translateY(2px) } to { opacity: 1; transform: none } }
 
 /* ===== update toast — her rays burst out once as the news arrives ===== */
 .uptoast-rays { position: absolute; left: 50%; top: 50%; width: 320px; height: 320px;
