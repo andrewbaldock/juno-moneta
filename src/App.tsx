@@ -175,6 +175,7 @@ const DEFAULTS = { 1: 268, 2: 392 } as const
 
 function Home({ session }: { session: Session }) {
   const [householdId, setHouseholdId] = useState<string | null>(null)
+  const [loadErr, setLoadErr] = useState(false)
   const [shelfCents, setShelfCents] = useState(0)
   const [settings, setSettings] = useState<HouseholdSettings>({})
   const [tab, setTabState] = useState<TabId>(() => pathToTab(location.pathname))
@@ -255,14 +256,33 @@ function Home({ session }: { session: Session }) {
     }
   }
 
+  // On a cold open the stored JWT may be stale; supabase-js refreshes it in the
+  // background, so the first household fetch can hit RLS with an expired token
+  // and get 0 rows. Retry a few times (the refresh lands within a second or two),
+  // re-run when the session token changes, and surface an error instead of
+  // hanging on "Loading household…" forever.
   useEffect(() => {
-    supabase.from('households').select('id,shelf_cents,settings').limit(1).single()
-      .then(({ data }) => {
-        setHouseholdId(data?.id ?? null)
-        setShelfCents(data?.shelf_cents ?? 0)
-        setSettings((data?.settings as HouseholdSettings) ?? {})
-      })
-  }, [])
+    let cancelled = false
+    async function load(attempt = 0) {
+      try {
+        const { data, error } = await supabase
+          .from('households').select('id,shelf_cents,settings').limit(1).single()
+        if (cancelled) return
+        if (error || !data) throw error ?? new Error('no household row')
+        setLoadErr(false)
+        setHouseholdId(data.id)
+        setShelfCents(data.shelf_cents ?? 0)
+        setSettings((data.settings as HouseholdSettings) ?? {})
+      } catch {
+        if (cancelled) return
+        if (attempt < 5) { setTimeout(() => load(attempt + 1), 500 * (attempt + 1)); return }
+        setLoadErr(true)
+      }
+    }
+    setLoadErr(false)
+    load()
+    return () => { cancelled = true }
+  }, [session.access_token])
 
   function scrollToCol(id: 'c1' | 'c2' | 'c3') {
     setMobile(id)
@@ -270,7 +290,18 @@ function Home({ session }: { session: Session }) {
   }
 
   if (householdId === null) {
-    return <main className="min-h-screen grid place-items-center"><p className="text-faint">Loading household…</p></main>
+    return (
+      <main className="min-h-screen grid place-items-center gap-3">
+        {loadErr ? (
+          <>
+            <p className="text-faint">Couldn’t load your household.</p>
+            <button className="underline text-faint" onClick={() => window.location.reload()}>Retry</button>
+          </>
+        ) : (
+          <p className="text-faint">Loading household…</p>
+        )}
+      </main>
+    )
   }
 
   return <Shell {...{ householdId, shelfCents, setShelfCents, tab, setTab, showHelp, openHelp, closeHelp, mobile, scrollToCol, w1, w2, setW1, setW2, col1, col2, setCol1, setCol2, dark, setDark, startDrag, userName, overlay: settings.advisor_overlay ?? '', people: peopleList(settings.people) }} />
