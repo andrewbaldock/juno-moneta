@@ -10,6 +10,14 @@ export type HouseholdSettings = {
   /** household-specific advisor prompt tuning, appended to the generic base prompt */
   advisor_overlay?: string
   calendar?: { embed_url?: string; ics_url?: string }
+  /**
+   * Household-written note pinned to the top of the Ledger. This is where a
+   * household explains its OWN reconciliation — "this reads lower than the
+   * spreadsheet because the water bill is every other month" — in its own words.
+   * Deliberately data, not code: the repo is public and stays free of anything
+   * specific to one family.
+   */
+  ledger?: { note?: string }
 }
 
 /** The household's people — the estate checklist seeds one document set per person. */

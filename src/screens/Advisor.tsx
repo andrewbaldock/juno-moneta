@@ -239,7 +239,7 @@ export function ConvoThread({ adv, userName, showPresence = false }: { adv: Advi
   // the proactive open: she has already looked (recomputed when the data lands)
   const brief = useMemo(
     () => (adv.ready ? buildBrief(userName, adv.accounts, adv.flows, new Date(), adv.snaps, adv.shelfCents, adv.estate, adv.overrides) : null),
-    [adv.ready, adv.accounts, adv.flows, adv.snaps, adv.shelfCents, adv.estate, userName],
+    [adv.ready, adv.accounts, adv.flows, adv.snaps, adv.shelfCents, adv.estate, adv.overrides, userName],
   )
 
   // good news beams the coin — once a day, not every mount

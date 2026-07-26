@@ -195,7 +195,7 @@ export default function CashFlows({ householdId }: { householdId: string }) {
         <FlowCalendar flows={rows} links={calLinks} onOpen={(f) => open(toDraft(f))} />
       )}
 
-      {view === 'ledger' && <FlowLedger flows={rows} onOpen={(f) => open(toDraft(f))} />}
+      {view === 'ledger' && <FlowLedger householdId={householdId} flows={rows} onOpen={(f) => open(toDraft(f))} />}
 
       {view === 'list' && sections.map(([direction, title]) => (
         <section key={direction} className="tw">

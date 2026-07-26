@@ -14,6 +14,7 @@ import { formatCents, parseDollars } from '../lib/money'
 import { projectDaily, type FlowOverride, type Occurrence } from '../lib/daily'
 import type { Account, CashFlow } from '../lib/types'
 import { liquid } from '../lib/metrics'
+import type { HouseholdSettings } from '../copy/juno'
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 const monthTitle = (iso: string) => {
@@ -23,14 +24,19 @@ const monthTitle = (iso: string) => {
 const dayOf = (iso: string) => Number(iso.split('-')[2])
 const monthOf = (iso: string) => iso.slice(0, 7)
 
-export default function FlowLedger({ flows, onOpen }: { flows: CashFlow[]; onOpen: (f: CashFlow) => void }) {
+export default function FlowLedger({ householdId, flows, onOpen }: {
+  householdId: string; flows: CashFlow[]; onOpen: (f: CashFlow) => void
+}) {
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [overrides, setOverrides] = useState<FlowOverride[]>([])
   const [months, setMonths] = useState(6)
   const [editing, setEditing] = useState<string | null>(null)  // `${flow_id}|${date}`
+  const [note, setNote] = useState<string>('')
 
   useEffect(() => {
     supabase.from('accounts').select('*').then(({ data }) => setAccounts((data as Account[]) ?? []))
+    supabase.from('households').select('settings').limit(1).single()
+      .then(({ data }) => setNote(((data?.settings as HouseholdSettings | null)?.ledger?.note) ?? ''))
     reloadOverrides()
   }, [])
 
@@ -80,6 +86,8 @@ export default function FlowLedger({ flows, onOpen }: { flows: CashFlow[]; onOpe
         it for that date only — the recurring row keeps its usual number, and the rest of Juno follows.
       </p>
 
+      <LedgerNote householdId={householdId} note={note} setNote={setNote} />
+
       {p.missing.length > 0 && (
         <p className="lgw">Left out, amount unknown: {p.missing.join(', ')}</p>
       )}
@@ -117,6 +125,8 @@ export default function FlowLedger({ flows, onOpen }: { flows: CashFlow[]; onOpe
                         <button type="button" className="nm" onClick={() => onOpen(r.flow)}>{r.flow.name}</button>
                         {r.flow.autopay && <span className="tag">auto</span>}
                         {r.overridden && <span className="tag ov" title={r.note ?? 'corrected for this date'}>edited</span>}
+                        {/* why this row is what it is — lives in cash_flows.notes, never in the repo */}
+                        {r.flow.notes && <span className="why">{r.flow.notes}</span>}
                       </td>
                       <td className="r num">{r.delta < 0 ? <AmountCell
                         editing={editing === key} onEdit={() => setEditing(key)}
@@ -153,6 +163,67 @@ export default function FlowLedger({ flows, onOpen }: { flows: CashFlow[]; onOpe
           Show six more months
         </button>
       )}
+    </div>
+  )
+}
+
+/**
+ * The household's own note, pinned above the ledger.
+ *
+ * This is where a family writes down why Juno and whatever they kept before don't
+ * agree — "the water bill is every other month, the spreadsheet charged it monthly"
+ * — in their own words. It's stored in `households.settings.ledger.note`, not in
+ * the codebase, because this repo is public and nothing specific to one household
+ * belongs in it.
+ */
+function LedgerNote({ householdId, note, setNote }: {
+  householdId: string; note: string; setNote: (s: string) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(note)
+  useEffect(() => { setDraft(note) }, [note])
+
+  async function save() {
+    setEditing(false)
+    const next = draft.trim()
+    if (next === note) return
+    setNote(next)
+    // merge into settings — never clobber people / advisor_overlay / calendar
+    const { data } = await supabase.from('households').select('settings').eq('id', householdId).single()
+    const settings = { ...((data?.settings as HouseholdSettings | null) ?? {}), ledger: { note: next } }
+    const { error } = await supabase.from('households').update({ settings }).eq('id', householdId)
+    if (error) alert(`Couldn't save the note: ${error.message}`)
+  }
+
+  if (editing) {
+    return (
+      <div className="lgn editing">
+        <textarea
+          autoFocus value={draft} rows={4}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape') { setDraft(note); setEditing(false) } }}
+          placeholder="Why these numbers are what they are — anything the household should remember when the totals look surprising."
+        />
+        <div className="lgnb">
+          <button type="button" className="btn-mint" onClick={save}>Save</button>
+          <button type="button" className="btn-quiet" onClick={() => { setDraft(note); setEditing(false) }}>Cancel</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!note) {
+    return (
+      <button type="button" className="lgn add" onClick={() => setEditing(true)}>
+        + Add a note about why these numbers differ from what you kept before
+      </button>
+    )
+  }
+
+  return (
+    <div className="lgn">
+      {note.split('\n').filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+      <button type="button" className="edit" onClick={() => setEditing(true)}>edit</button>
     </div>
   )
 }
