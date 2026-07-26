@@ -6,7 +6,8 @@
 // (README invariant #6). The DB stays integer cents; NULL stays "unknown", never 0.
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { buildBrief } from '../src/lib/brief'
-import { debtOutlooks, liquid, monthLabel, monthlyNet, netWorth, project, runwayMonths } from '../src/lib/metrics'
+import { debtOutlooks, liquid, monthLabel, monthlyNet, netWorth, runwayMonths } from '../src/lib/metrics'
+import { projectMonthly, type FlowOverride } from '../src/lib/daily'
 import type { Account, CashFlow } from '../src/lib/types'
 
 const usd = (cents: number | null) => (cents === null ? null : cents / 100)
@@ -19,13 +20,19 @@ const nowKey = () => {
 }
 
 async function loadAll(supa: SupabaseClient) {
-  const [a, f] = await Promise.all([
+  const [a, f, o] = await Promise.all([
     supa.from('accounts').select('*').order('name'),
     supa.from('cash_flows').select('*').order('name'),
+    supa.from('flow_overrides').select('flow_id,occurs_on,amount_cents,skipped,note'),
   ])
   if (a.error) throw new Error(a.error.message)
   if (f.error) throw new Error(f.error.message)
-  return { accounts: (a.data as Account[]) ?? [], flows: (f.data as CashFlow[]) ?? [] }
+  if (o.error) throw new Error(o.error.message)
+  return {
+    accounts: (a.data as Account[]) ?? [],
+    flows: (f.data as CashFlow[]) ?? [],
+    overrides: (o.data as FlowOverride[]) ?? [],
+  }
 }
 
 export async function householdId(supa: SupabaseClient): Promise<string> {
@@ -36,12 +43,12 @@ export async function householdId(supa: SupabaseClient): Promise<string> {
 
 /** Current rows, balances, and the provisional gaps — the whole picture. */
 export async function state(supa: SupabaseClient) {
-  const { accounts, flows } = await loadAll(supa)
+  const { accounts, flows, overrides } = await loadAll(supa)
   const key = nowKey()
   const nw = netWorth(accounts)
   const liq = liquid(accounts)
   const net = monthlyNet(flows, key)
-  const run = runwayMonths(project(flows, liq.cents, key + 1, 60))
+  const run = runwayMonths(projectMonthly(flows, liq.cents, key + 1, 60, { overrides }))
   return {
     accounts: accounts.map((a) => ({
       id: a.id, name: a.name, kind: a.kind, category: a.category,
@@ -123,15 +130,15 @@ export async function recall(supa: SupabaseClient, topic?: string) {
 
 /** Forward view — cash projection, runway, and where each debt is heading. */
 export async function projectForward(supa: SupabaseClient, horizonMonths = 24) {
-  const { accounts, flows } = await loadAll(supa)
+  const { accounts, flows, overrides } = await loadAll(supa)
   const key = nowKey()
   const liq = liquid(accounts).cents
   const months = Math.max(1, Math.min(60, Math.round(horizonMonths)))
-  const pts = project(flows, liq, key + 1, 60)
+  const pts = projectMonthly(flows, liq, key + 1, 60, { overrides })
   return {
     cash: pts.slice(0, months).map((p) => ({ month: monthLabel(p.key), cumulative_usd: usd(p.cumulative) })),
     runway_months: runwayMonths(pts),
-    runway_months_lean: runwayMonths(project(flows, liq, key + 1, 60, true)),
+    runway_months_lean: runwayMonths(projectMonthly(flows, liq, key + 1, 60, { lean: true, overrides })),
     debts: debtOutlooks(accounts, flows, key + 1).map((o) => ({
       name: o.name,
       status: o.unlinked ? 'no payment linked' : o.underwater ? 'payment does not cover interest' :
@@ -142,6 +149,6 @@ export async function projectForward(supa: SupabaseClient, horizonMonths = 24) {
 
 /** The on-open greeting for one specific person — she speaks to one person. */
 export async function brief(supa: SupabaseClient, user: string) {
-  const { accounts, flows } = await loadAll(supa)
-  return buildBrief(user, accounts, flows)
+  const { accounts, flows, overrides } = await loadAll(supa)
+  return buildBrief(user, accounts, flows, new Date(), [], 0, [], overrides)
 }

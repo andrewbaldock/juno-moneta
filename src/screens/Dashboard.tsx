@@ -5,10 +5,10 @@ import {
 import { supabase } from '../lib/supabase'
 import { centsToInput, formatCents, parseDollars } from '../lib/money'
 import {
-  debtOutlooks, liquid, LIQUID_CATEGORIES, monthLabel, monthlyNet, netWorth, netWorthSeries, project, projectNetWorth, runwayMonths,
+  debtOutlooks, liquid, LIQUID_CATEGORIES, monthLabel, monthlyNet, netWorth, netWorthSeries, projectNetWorth, runwayMonths,
   type Snapshot,
 } from '../lib/metrics'
-import { projectDaily, type FlowOverride } from '../lib/daily'
+import { projectDaily, projectMonthly, type FlowOverride } from '../lib/daily'
 import type { Account, CashFlow } from '../lib/types'
 import { beam, MarkOwn, MarkSavings, MarkSpending, MarkIncome, MarkOwe } from '../components/juno/motifs'
 import { juno } from '../copy/juno'
@@ -64,11 +64,11 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
       .reduce((s, a) => s + (a.balance_cents as number), 0)
     const owe = accounts.filter((a) => a.kind === 'liability' && a.balance_cents !== null)
       .reduce((s, a) => s + (a.balance_cents as number), 0)
-    const projCurrent = project(flows, liq.cents, nowKey + 1, HORIZON)
-    const projLean = project(flows, liq.cents, nowKey + 1, HORIZON, true)
+    const projCurrent = projectMonthly(flows, liq.cents, nowKey + 1, HORIZON, { overrides })
+    const projLean = projectMonthly(flows, liq.cents, nowKey + 1, HORIZON, { lean: true, overrides })
     return {
       nw, liq, current, lean, own, owe, spending: -spending.cents, income: income.cents, projCurrent,
-      incomeMonths: project(incomeFlows, 0, nowKey, 12).map((p) => ({ label: monthLabel(p.key), cents: p.net })),
+      incomeMonths: projectMonthly(incomeFlows, 0, nowKey, 12, { overrides }).map((p) => ({ label: monthLabel(p.key), cents: p.net })),
       runCurrent: runwayMonths(projCurrent, shelfCents),
       runLean: runwayMonths(projLean, shelfCents),
       nwSeries: netWorthSeries(accounts, snaps),

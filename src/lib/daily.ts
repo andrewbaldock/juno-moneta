@@ -11,7 +11,7 @@
 // Dates are handled the calendar.ts way — split by hand, arithmetic in UTC. Never
 // Date.parse a bare YYYY-MM-DD (UTC midnight reads as the previous evening here).
 import { monthEvents } from './calendar'
-import { afterTax, counts } from './metrics'
+import { afterTax, counts, monthlyEquivalent, monthKeyOf, type ProjPoint } from './metrics'
 import type { CashFlow } from './types'
 
 /** A per-occurrence correction to a flow's rule. Keyed by (flow_id, occurs_on). */
@@ -136,4 +136,59 @@ export function projectDaily(
     low,
     firstBelow: points.find((p) => p.balance <= floorCents) ?? null,
   }
+}
+
+/**
+ * The monthly projection, derived from the dated one — same `ProjPoint[]` shape
+ * `metrics.project` returns, so runway, net worth and the scenario charts consume
+ * it unchanged.
+ *
+ * This is the reconciliation. `project()` smooths every cadence to a monthly
+ * average, which means the monthly chart and the day-by-day ledger were two
+ * independent answers to "what happens in June" and could quietly disagree.
+ * Here a month's net is just its dated occurrences added up — one engine, two
+ * zoom levels — so correcting one bill in the Ledger moves runway too.
+ *
+ * Flows that can't be dated yet (no due_day, no start_date anchor) keep the old
+ * smoothed treatment rather than vanishing: adding a due day should sharpen WHEN
+ * money moves without changing WHETHER it was counted.
+ */
+export function projectMonthly(
+  flows: CashFlow[],
+  startCents: number,
+  startKey: number,
+  months: number,
+  { lean = false, overrides = [] }: { lean?: boolean; overrides?: FlowOverride[] } = {},
+): ProjPoint[] {
+  const y = Math.floor(startKey / 12)
+  const m0 = startKey % 12
+  const from = Date.UTC(y, m0, 1)
+  const through = Date.UTC(Math.floor((startKey + months) / 12), (startKey + months) % 12, 0)
+  const daily = projectDaily(flows, startCents, fmt(from), Math.round((through - from) / DAY), { lean, overrides })
+
+  const netByKey = new Map<number, number>()
+  for (const r of daily.rows) netByKey.set(monthKeyOf(r.date), (netByKey.get(monthKeyOf(r.date)) ?? 0) + r.delta)
+
+  // undateable flows still count, the old smoothed way
+  for (const f of daily.unplaced) {
+    const sKey = f.start_date === null ? null : monthKeyOf(f.start_date)
+    const eKey = f.end_date === null ? null : monthKeyOf(f.end_date)
+    const sign = f.direction === 'income' ? 1 : -1
+    for (let i = 0; i < months; i++) {
+      const k = startKey + i
+      if (sKey !== null && k < sKey) continue
+      if (eKey !== null && k > eKey) continue
+      netByKey.set(k, (netByKey.get(k) ?? 0) + sign * monthlyEquivalent(f))
+    }
+  }
+
+  const pts: ProjPoint[] = []
+  let cum = startCents
+  for (let i = 0; i < months; i++) {
+    const k = startKey + i
+    const net = netByKey.get(k) ?? 0
+    cum += net
+    pts.push({ key: k, net, cumulative: cum })
+  }
+  return pts
 }

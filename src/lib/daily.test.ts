@@ -1,7 +1,8 @@
 // Every number here is invented. Real household figures live in Supabase, never
 // in the repo — these fixtures only have to exercise the SHAPE of the arithmetic.
 import { expect, test } from 'bun:test'
-import { projectDaily } from './daily'
+import { projectDaily, projectMonthly } from './daily'
+import { project } from './metrics'
 import type { CashFlow } from './types'
 
 const flow = (over: Partial<CashFlow>): CashFlow => ({
@@ -136,4 +137,57 @@ test('the floor is the shelf, not zero', () => {
   const p = projectDaily([flow({ amount_cents: 30000, due_day: 10 })], 100000, '2026-03-01', 31, { floorCents: 80000 })
   expect(p.firstBelow!.date).toBe('2026-03-10')
   expect(projectDaily([flow({ amount_cents: 30000, due_day: 10 })], 100000, '2026-03-01', 31).firstBelow).toBeNull()
+})
+
+// ── the reconciliation: monthly is the daily view, zoomed out ────────────────
+
+test('monthly totals equal the daily rows for the same month', () => {
+  const flows = [
+    flow({ id: 'r', amount_cents: 200000, due_day: 1 }),
+    flow({ id: 'u', amount_cents: 26000, due_day: 15 }),
+    flow({ id: 'p', direction: 'income', amount_cents: 190000, cadence: 'biweekly', start_date: '2026-08-07' }),
+  ]
+  const monthly = projectMonthly(flows, 5000000, 2026 * 12 + 7, 3) // Aug 2026
+  const daily = projectDaily(flows, 5000000, '2026-08-01', 30)
+
+  expect(monthly[0].net).toBe(daily.rows.reduce((s, r) => s + r.delta, 0))
+  expect(monthly[0].cumulative).toBe(daily.rows[daily.rows.length - 1].balance)
+})
+
+test('a three-paycheck month shows up in the monthly line too', () => {
+  // The smoothing bug this fixes: project() gives every month 2.167 paychecks, so
+  // the month with three looks identical to the others.
+  const pay = [flow({ direction: 'income', amount_cents: 100000, cadence: 'biweekly', start_date: '2026-05-01' })]
+  const key = 2026 * 12 + 4 // May 2026 pays on the 1st, 15th and 29th
+  expect(projectMonthly(pay, 0, key, 2)[0].net).toBe(300000)
+  expect(project(pay, 0, key, 2)[0].net).toBe(216667)   // the old smoothed answer
+})
+
+test('an every-4-months bill is only charged every fourth month', () => {
+  const bill = [flow({ amount_cents: 20716, cadence: 'every_4_months', start_date: '2026-01-15', due_day: 15 })]
+  expect(projectMonthly(bill, 0, 2026 * 12, 4).map((p) => p.net)).toEqual([-20716, 0, 0, 0])
+})
+
+test('a Ledger correction moves the monthly projection', () => {
+  // The reconciliation guarantee: one edited cell, every number downstream follows.
+  const bill = [flow({ id: 'pge', amount_cents: 20000, due_day: 17 })]
+  const key = 2026 * 12 + 1 // Feb 2026
+  const base = projectMonthly(bill, 100000, key, 2)
+  const bumped = projectMonthly(bill, 100000, key, 2, {
+    overrides: [{ flow_id: 'pge', occurs_on: '2026-02-17', amount_cents: 50000, skipped: false, note: null }],
+  })
+  expect(base[0].net).toBe(-20000)
+  expect(bumped[0].net).toBe(-50000)
+  expect(base[1].cumulative - bumped[1].cumulative).toBe(30000) // and it carries forward
+})
+
+test('flows with no due day still count, smoothed, instead of vanishing', () => {
+  // Adding a due day must sharpen WHEN money moves, never WHETHER it was counted.
+  const undateable = [flow({ name: 'No day', amount_cents: 30000, cadence: 'monthly' })]
+  const key = 2026 * 12 + 3
+  expect(projectMonthly(undateable, 0, key, 3).map((p) => p.net)).toEqual([-30000, -30000, -30000])
+  // ...and the annual total is unchanged once a due day is added
+  const dated = [flow({ name: 'No day', amount_cents: 30000, cadence: 'monthly', due_day: 12 })]
+  const sum = (ps: { net: number }[]) => ps.reduce((s, p) => s + p.net, 0)
+  expect(sum(projectMonthly(dated, 0, key, 12))).toBe(sum(projectMonthly(undateable, 0, key, 12)))
 })

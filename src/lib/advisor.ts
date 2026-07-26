@@ -1,8 +1,9 @@
 // Phase 4: advisor types + snapshot builder + scenario application.
 // Claude proposes scenario *deltas*; OUR engine does all math (metrics.ts).
 
+import { projectMonthly, type FlowOverride } from './daily'
 import type { Account, CashFlow, EstateItem } from './types'
-import { debtOutlooks, liquid, monthlyEquivalent, monthlyNet, netWorth, project, runwayMonths, monthKeyOf } from './metrics'
+import { debtOutlooks, liquid, monthlyEquivalent, monthlyNet, netWorth, runwayMonths, monthKeyOf } from './metrics'
 import { unfundedAssets } from './estate'
 
 // Claude misread the UI label "Jul 26" as July 26th (then guessed the wrong year).
@@ -154,13 +155,13 @@ function flowAmount(f: CashFlow): { monthly_usd?: number | null; one_time_usd?: 
 }
 
 /** Compact, numbers-only snapshot the advisor reasons over. Names are exact for delta targeting. */
-export function buildSnapshot(accounts: Account[], flows: CashFlow[], nowKey: number, shelfCents = 0, estate: EstateItem[] = []) {
+export function buildSnapshot(accounts: Account[], flows: CashFlow[], nowKey: number, shelfCents = 0, estate: EstateItem[] = [], overrides: FlowOverride[] = []) {
   const nw = netWorth(accounts)
   const liq = liquid(accounts)
   const cur = monthlyNet(flows, nowKey)
   const lean = monthlyNet(flows, nowKey, true)
-  const projC = project(flows, liq.cents, nowKey + 1, 60)
-  const projL = project(flows, liq.cents, nowKey + 1, 60, true)
+  const projC = projectMonthly(flows, liq.cents, nowKey + 1, 60, { overrides })
+  const projL = projectMonthly(flows, liq.cents, nowKey + 1, 60, { lean: true, overrides })
   const dollars = (c: number | null) => (c === null ? null : Math.round(c / 100))
   return {
     date: isoMonth(nowKey),

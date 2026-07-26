@@ -83,6 +83,12 @@ export type ProjPoint = { key: number; net: number; cumulative: number }
  * Month-by-month cash projection starting at `startKey`.
  * Lumpy cadences (annual/bimonthly/every-4-months) land on their real months when
  * a start_date anchors them, otherwise they're smoothed. One-times land on their date's month.
+ *
+ * SUPERSEDED — the app now runs `daily.projectMonthly`, which sums real dated
+ * occurrences instead of smoothing, so the monthly view and the Ledger can't
+ * disagree. Kept as the reference smoothed implementation: daily.test.ts asserts
+ * against it to pin exactly what the smoothing got wrong (a three-paycheck month
+ * reads 2.167 paychecks here). Nothing else calls it.
  */
 export function project(flows: CashFlow[], startCents: number, startKey: number, months: number, lean = false): ProjPoint[] {
   const pts: ProjPoint[] = []

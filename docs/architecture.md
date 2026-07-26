@@ -48,9 +48,10 @@ calls inside `useEffect`.** There is no shared data layer, React Query, context,
 
 | Screen | Reads / writes |
 |---|---|
-| `Dashboard` | reads `accounts`, `cash_flows`, `balance_snapshots`; writes the do-not-touch **shelf** (`households.shelf_cents`) |
+| `Dashboard` | reads `accounts`, `cash_flows`, `balance_snapshots`, `flow_overrides`; writes the do-not-touch **shelf** (`households.shelf_cents`) |
 | `Accounts` | CRUD over `accounts` (incl. `details` jsonb per account type) |
 | `CashFlows` | CRUD over `cash_flows`; reads liability accounts (pays-down link) + `households.settings` (calendar links) |
+| `FlowLedger` | child of `CashFlows`; the spreadsheet view — dated rows + running balance; writes `flow_overrides` |
 | `FlowCalendar` | child of `CashFlows`; pure presentation of bill occurrences; "Share" surfaces the ICS feed URL |
 | `Estate` | reads/writes `estate_items` (auto-seeds a checklist) and retitles `accounts.titled_to` |
 | `Tasks` | aggregates gaps + checklist + harvested advisor actions + annual law-review nag |
@@ -63,8 +64,9 @@ The financial math is a set of **pure modules** — 10 of 11 files do no I/O (on
 these functions compute every projection.
 
 - `money.ts` — the only cents↔dollars parser/formatter.
-- `metrics.ts` — `netWorth`, `liquid`, `monthlyNet`, `project` (month-by-month cash
-  projection), `runwayMonths`, `debtOutlooks` (amortization), `netWorthSeries`.
+- `metrics.ts` — `netWorth`, `liquid`, `monthlyNet`, `runwayMonths`, `debtOutlooks`
+  (amortization), `netWorthSeries`; plus `project`, the superseded smoothed projection
+  (see `daily.ts`).
 - `advisor.ts` — `buildSnapshot` (the numbers-only picture sent to Claude), `applyScenario`
   (applies Claude's deltas to a copy of the flows), `timelineEvents`, starter `suggestions`.
 - `brief.ts` — ranks proactive observations (low runway, income cliffs, payoffs) into the greeting.
@@ -73,10 +75,13 @@ these functions compute every projection.
   expander, applying `flow_overrides` per occurrence. Where `metrics.project` smooths each
   cadence to a monthly net (the right shape for runway), this keeps the dates, so it shows the
   mid-month dip and gives biweekly income its real three-paycheck months. Feeds the Dashboard's
-  day-by-day chart and the Ledger view. **Caveat: the two engines are still separate — the monthly
-  projection does not read `flow_overrides` and still smooths, so the monthly and daily views can
-  disagree. Unifying them (monthly = daily grouped by month, smoothing only undateable flows) is
-  the intended next step.**
+  day-by-day chart and the Ledger view. Also exports `projectMonthly` — the app's monthly
+  projection, which is simply the dated occurrences grouped by month. One engine, two zoom
+  levels, so the Dashboard, the advisor, runway and the Ledger cannot disagree; correcting one
+  bill in the Ledger moves runway. Flows that can't be dated yet (no `due_day`, no `start_date`)
+  fall back to the old smoothed monthly-equivalent, so adding a due day sharpens WHEN money
+  moves without changing WHETHER it counted. `metrics.project` is superseded and now referenced
+  only by tests, which assert against it to pin what the smoothing got wrong.
 - `estate.ts` — trust-funding logic (`unfundedAssets`, `trustUnfunded`); pure constants, no I/O.
 - `law.ts` — **hand-verified** federal/California/Contra-Costa tax & legal constants, each tagged
   `effectiveDate` + `source`, gated by a `LAW_REVIEWED` stamp. Nothing is scraped or polled.
@@ -84,7 +89,7 @@ these functions compute every projection.
 - `edits.ts` — validates/resolves the advisor's proposed ledger edits (names→ids, dollars→cents, add/update only).
 - `types.ts` — shared types + category/label constants.
 
-Every pure module ships with a `bun test` file; there are 9 test files, one per module.
+Every pure module ships with a `bun test` file; there are 11 test files, one per module.
 
 ### State & household scoping
 State is component-local `useState` hydrated by Supabase calls. The closest thing to a

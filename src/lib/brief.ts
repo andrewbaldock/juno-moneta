@@ -1,9 +1,10 @@
 // The proactive open: when a fresh conversation opens, Juno has already looked.
 // Rank candidate observations by urgency × actionability, surface the top one
 // (a second, at most, as the yod footnote). 05-system-notes.md §1.
-import { debtOutlooks, liquid, monthLabel, monthlyNet, netWorthSeries, project, runwayMonths, type Snapshot } from './metrics'
+import { debtOutlooks, liquid, monthLabel, monthlyNet, netWorthSeries, runwayMonths, type Snapshot } from './metrics'
 import { trustUnfunded } from './estate'
 import { formatCents } from './money'
+import { projectMonthly, type FlowOverride } from './daily'
 import type { Account, CashFlow, EstateItem } from './types'
 import { greetingPrefix, juno, moments } from '../copy/juno'
 
@@ -18,16 +19,16 @@ type Candidate = { score: number; text: string; short: string; good: boolean }
 const HORIZON = 60
 const runwayText = (r: number | null) => (r === null ? '5+ years' : r === 1 ? '1 month' : `${r} months`)
 
-export function buildBrief(name: string, accounts: Account[], flows: CashFlow[], now: Date = new Date(), snaps: Snapshot[] = [], shelfCents = 0, estate: EstateItem[] = []): Brief {
+export function buildBrief(name: string, accounts: Account[], flows: CashFlow[], now: Date = new Date(), snaps: Snapshot[] = [], shelfCents = 0, estate: EstateItem[] = [], overrides: FlowOverride[] = []): Brief {
   if (accounts.length === 0 && flows.length === 0) {
     return { text: `${greetingPrefix(name, now.getHours())} ${juno.noAccounts}`, good: false }
   }
 
   const nowKey = now.getFullYear() * 12 + now.getMonth()
   const liq = liquid(accounts).cents
-  const proj = project(flows, liq, nowKey + 1, HORIZON)
+  const proj = projectMonthly(flows, liq, nowKey + 1, HORIZON, { overrides })
   const runway = runwayMonths(proj, shelfCents)
-  const runwayLean = runwayMonths(project(flows, liq, nowKey + 1, HORIZON, true), shelfCents)
+  const runwayLean = runwayMonths(projectMonthly(flows, liq, nowKey + 1, HORIZON, { lean: true, overrides }), shelfCents)
   const net = monthlyNet(flows, nowKey).cents
 
   const candidates: Candidate[] = []

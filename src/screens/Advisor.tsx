@@ -4,7 +4,7 @@ import {
 } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { formatCents } from '../lib/money'
-import { liquid, monthLabel, project, runwayMonths, type Snapshot } from '../lib/metrics'
+import { liquid, monthLabel, runwayMonths, type Snapshot } from '../lib/metrics'
 import { applyScenario, buildSnapshot, suggestions, timelineEvents, type Advice, type Scenario } from '../lib/advisor'
 import { resolveEdits, validateEdits } from '../lib/edits'
 import type { Account, CashFlow, EstateItem } from '../lib/types'
@@ -12,6 +12,7 @@ import JunoSays from '../components/juno/JunoSays'
 import JunoPresence from '../components/juno/JunoPresence'
 import { beam, COIN_SM_SRC, Yod } from '../components/juno/motifs'
 import { buildBrief } from '../lib/brief'
+import { projectMonthly, type FlowOverride } from '../lib/daily'
 import { juno } from '../copy/juno'
 
 type Convo = { id: string; title: string; updated_at: string }
@@ -50,6 +51,7 @@ export function useAdvisor(householdId: string, shelfCents = 0, overlay = '') {
   const [notes, setNotes] = useState<Note[]>([])
   const [snaps, setSnaps] = useState<Snapshot[]>([])
   const [estate, setEstate] = useState<EstateItem[]>([])
+  const [overrides, setOverrides] = useState<FlowOverride[]>([])
   const [ready, setReady] = useState(false)
 
   const now = new Date()
@@ -66,6 +68,8 @@ export function useAdvisor(householdId: string, shelfCents = 0, overlay = '') {
       supabase.from('balance_snapshots').select('account_id,balance_cents,as_of_date').order('created_at')
         .then(({ data }) => setSnaps((data as Snapshot[]) ?? [])),
       supabase.from('estate_items').select('*').then(({ data }) => setEstate((data as EstateItem[]) ?? [])),
+      supabase.from('flow_overrides').select('flow_id,occurs_on,amount_cents,skipped,note')
+        .then(({ data }) => setOverrides((data as FlowOverride[]) ?? [])),
     ]).then(() => setReady(true))
   }, [])
 
@@ -107,7 +111,7 @@ export function useAdvisor(householdId: string, shelfCents = 0, overlay = '') {
     await supabase.from('messages').insert({ conversation_id: convoId, role: 'user', content: question })
 
     const history = [...msgs, userMsg].map((m) => ({ role: m.role, content: m.content }))
-    const snapshot = buildSnapshot(accounts, flows, nowKey, shelfCents, estate)
+    const snapshot = buildSnapshot(accounts, flows, nowKey, shelfCents, estate, overrides)
     const { data, error: err } = await supabase.functions.invoke('claude-proxy', {
       body: { messages: history, snapshot, memories: notes.map((n) => n.note), overlay },
     })
@@ -192,7 +196,7 @@ export function useAdvisor(householdId: string, shelfCents = 0, overlay = '') {
 
   return {
     convos, activeId, setActiveId, activeTitle, msgs, busy, error,
-    accounts, flows, snaps, estate, ready, nowKey, shelfCents, gaps, starters, send, removeConvo,
+    accounts, flows, snaps, estate, overrides, ready, nowKey, shelfCents, gaps, starters, send, removeConvo,
   }
 }
 
@@ -234,7 +238,7 @@ export function ConvoThread({ adv, userName, showPresence = false }: { adv: Advi
 
   // the proactive open: she has already looked (recomputed when the data lands)
   const brief = useMemo(
-    () => (adv.ready ? buildBrief(userName, adv.accounts, adv.flows, new Date(), adv.snaps, adv.shelfCents, adv.estate) : null),
+    () => (adv.ready ? buildBrief(userName, adv.accounts, adv.flows, new Date(), adv.snaps, adv.shelfCents, adv.estate, adv.overrides) : null),
     [adv.ready, adv.accounts, adv.flows, adv.snaps, adv.shelfCents, adv.estate, userName],
   )
 
@@ -309,7 +313,7 @@ export function ConvoThread({ adv, userName, showPresence = false }: { adv: Advi
               )}
               {m.payload?.scenario && (
                 <div className="mb-4 ml-9.5">
-                  <ScenarioView scenario={m.payload.scenario} accounts={adv.accounts} flows={adv.flows} nowKey={adv.nowKey} shelfCents={adv.shelfCents} />
+                  <ScenarioView scenario={m.payload.scenario} accounts={adv.accounts} flows={adv.flows} nowKey={adv.nowKey} shelfCents={adv.shelfCents} overrides={adv.overrides} />
                 </div>
               )}
             </div>
@@ -342,15 +346,16 @@ export function ConvoThread({ adv, userName, showPresence = false }: { adv: Advi
   )
 }
 
-function ScenarioView({ scenario, accounts, flows, nowKey, shelfCents }: {
+function ScenarioView({ scenario, accounts, flows, nowKey, shelfCents, overrides }: {
   scenario: Scenario; accounts: Account[]; flows: CashFlow[]; nowKey: number; shelfCents: number
+  overrides: FlowOverride[]
 }) {
   const m = useMemo(() => {
     const liq = liquid(accounts).cents
     const scenFlows = applyScenario(flows, scenario.changes, nowKey)
     const MONTHS = 24
-    const base = project(flows, liq, nowKey + 1, MONTHS)
-    const scen = project(scenFlows, liq, nowKey + 1, MONTHS)
+    const base = projectMonthly(flows, liq, nowKey + 1, MONTHS, { overrides })
+    const scen = projectMonthly(scenFlows, liq, nowKey + 1, MONTHS, { overrides })
     const events = timelineEvents(scenFlows, accounts, scen, nowKey, shelfCents)
     const evByKey = new Map<number, string>()
     for (const e of events) evByKey.set(e.key, evByKey.has(e.key) ? `${evByKey.get(e.key)} · ${e.label}` : e.label)
@@ -361,10 +366,10 @@ function ScenarioView({ scenario, accounts, flows, nowKey, shelfCents }: {
         scenario: scen[i].cumulative,
         eventLabel: evByKey.get(p.key),
       })),
-      runBase: runwayMonths(project(flows, liq, nowKey + 1, 60), shelfCents),
-      runScen: runwayMonths(project(scenFlows, liq, nowKey + 1, 60), shelfCents),
+      runBase: runwayMonths(projectMonthly(flows, liq, nowKey + 1, 60, { overrides }), shelfCents),
+      runScen: runwayMonths(projectMonthly(scenFlows, liq, nowKey + 1, 60, { overrides }), shelfCents),
     }
-  }, [scenario, accounts, flows, nowKey, shelfCents])
+  }, [scenario, accounts, flows, nowKey, shelfCents, overrides])
 
   const runwayText = (r: number | null) => (r === null ? '5+ yrs' : `${r} mo`)
 
