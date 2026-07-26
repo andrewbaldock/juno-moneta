@@ -267,6 +267,10 @@ body {
 .lgn.editing textarea { width: 100%; font: inherit; font-size: 13px; line-height: 1.55; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; resize: vertical }
 .lgnb { display: flex; gap: 6px; margin-top: 8px }
 .lgtbl .why { display: block; font-size: 11.5px; color: var(--faint); line-height: 1.4; margin-top: 1px; max-width: 52ch }
+/* an unconfirmed number must never read as a settled one */
+.lgtbl .why.unver { color: var(--amber-ink) }
+.lgtbl .why.unver b { display: inline-block; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+  background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 4px; padding: 0 4px; margin-right: 5px; vertical-align: 1px }
 .lgm { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px 8px; margin-bottom: 14px }
 .lgh { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 8px }
 .lgh h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0 }

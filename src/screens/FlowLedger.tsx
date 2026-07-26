@@ -126,7 +126,7 @@ export default function FlowLedger({ householdId, flows, onOpen }: {
                         {r.flow.autopay && <span className="tag">auto</span>}
                         {r.overridden && <span className="tag ov" title={r.note ?? 'corrected for this date'}>edited</span>}
                         {/* why this row is what it is — lives in cash_flows.notes, never in the repo */}
-                        {r.flow.notes && <span className="why">{r.flow.notes}</span>}
+                        {r.flow.notes && <Why note={r.flow.notes} />}
                       </td>
                       <td className="r num">{r.delta < 0 ? <AmountCell
                         editing={editing === key} onEdit={() => setEditing(key)}
@@ -164,6 +164,23 @@ export default function FlowLedger({ householdId, flows, onOpen }: {
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * A row's note. Any note containing "ASSUMPTION" is a number nobody has confirmed
+ * yet — a guessed due day, an arbitrary choice between two identical rows — and it
+ * gets flagged rather than left to read like fact. An unverified figure that LOOKS
+ * verified is the one that quietly misleads, so the marker is the whole point.
+ */
+function Why({ note }: { note: string }) {
+  const unverified = note.includes('ASSUMPTION')
+  if (!unverified) return <span className="why">{note}</span>
+  return (
+    <span className="why unver">
+      <b>needs verifying</b>
+      {note.replace(/ASSUMPTION:\s*/g, '')}
+    </span>
   )
 }
 
