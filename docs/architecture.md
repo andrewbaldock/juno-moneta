@@ -69,6 +69,14 @@ these functions compute every projection.
   (applies Claude's deltas to a copy of the flows), `timelineEvents`, starter `suggestions`.
 - `brief.ts` — ranks proactive observations (low runway, income cliffs, payoffs) into the greeting.
 - `calendar.ts` — expands flows into dated bill occurrences (duplicated into the `calendar-ics` edge function; kept in sync deliberately).
+- `daily.ts` — `projectDaily`: the running cash balance on real dates, built on `calendar.ts`'s
+  expander, applying `flow_overrides` per occurrence. Where `metrics.project` smooths each
+  cadence to a monthly net (the right shape for runway), this keeps the dates, so it shows the
+  mid-month dip and gives biweekly income its real three-paycheck months. Feeds the Dashboard's
+  day-by-day chart and the Ledger view. **Caveat: the two engines are still separate — the monthly
+  projection does not read `flow_overrides` and still smooths, so the monthly and daily views can
+  disagree. Unifying them (monthly = daily grouped by month, smoothing only undateable flows) is
+  the intended next step.**
 - `estate.ts` — trust-funding logic (`unfundedAssets`, `trustUnfunded`); pure constants, no I/O.
 - `law.ts` — **hand-verified** federal/California/Contra-Costa tax & legal constants, each tagged
   `effectiveDate` + `source`, gated by a `LAW_REVIEWED` stamp. Nothing is scraped or polled.
@@ -111,8 +119,10 @@ auth.users ──< household_members >── households ──┬─ accounts �
    (GoTrue)                          shelf_cents   │   (assets/liabilities,           (append-only,
                                      settings jsonb│    balance_cents, titled_to,      trigger-written)
                                                    │    details jsonb)
-                                                   ├─ cash_flows (income/expense, cadence,
-                                                   │   account_id → pays down a debt, due-date fields)
+                                                   ├─ cash_flows ──< flow_overrides
+                                                   │   (income/expense, cadence,       (one occurrence
+                                                   │   account_id → pays down a debt,   corrected: amount
+                                                   │   due-date fields)                 or skipped)
                                                    ├─ conversations ──< messages (payload jsonb)
                                                    ├─ juno_notes  (advisor durable memory)
                                                    └─ estate_items (docs checklist + trust funding)
@@ -131,7 +141,7 @@ create policy member_all on accounts for all
   using (is_member(household_id)) with check (is_member(household_id));
 ```
 
-Child tables (`balance_snapshots`, `messages`) resolve membership through their parent's
+Child tables (`balance_snapshots`, `messages`, `flow_overrides`) resolve membership through their parent's
 `household_id` in a subquery. `households`/`household_members` use direct `auth.uid()`
 checks. The net effect: the anon key is safe to ship in the client because **RLS, not the
 key, is the access boundary** — a signed-in user can only ever read/write their own

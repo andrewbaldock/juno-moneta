@@ -8,11 +8,20 @@ import {
   debtOutlooks, liquid, LIQUID_CATEGORIES, monthLabel, monthlyNet, netWorth, netWorthSeries, project, projectNetWorth, runwayMonths,
   type Snapshot,
 } from '../lib/metrics'
+import { projectDaily, type FlowOverride } from '../lib/daily'
 import type { Account, CashFlow } from '../lib/types'
 import { beam, MarkOwn, MarkSavings, MarkSpending, MarkIncome, MarkOwe } from '../components/juno/motifs'
 import { juno } from '../copy/juno'
 
 const HORIZON = 60          // months computed for runway; chart shows first 12
+const DAILY_DAYS = 120      // days of day-by-day cash — far enough to see the next few dips
+
+const DAY_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** 'YYYY-MM-DD' → 'Mar 20'. Split by hand — Date.parse on a bare date reads as the previous evening here. */
+const dayLabel = (iso: string) => {
+  const [, m, d] = iso.split('-').map(Number)
+  return `${DAY_MONTHS[m - 1]} ${d}`
+}
 
 export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
   householdId: string; shelfCents: number; setShelfCents: (n: number) => void
@@ -20,17 +29,23 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
   const [accounts, setAccounts] = useState<Account[] | null>(null)
   const [flows, setFlows] = useState<CashFlow[] | null>(null)
   const [snaps, setSnaps] = useState<Snapshot[] | null>(null)
+  // per-occurrence corrections from the Ledger — the daily line must agree with it
+  const [overrides, setOverrides] = useState<FlowOverride[]>([])
 
   useEffect(() => {
     supabase.from('accounts').select('*').then(({ data }) => setAccounts((data as Account[]) ?? []))
     supabase.from('cash_flows').select('*').then(({ data }) => setFlows((data as CashFlow[]) ?? []))
     supabase.from('balance_snapshots').select('account_id,balance_cents,as_of_date').order('created_at')
       .then(({ data }) => setSnaps((data as Snapshot[]) ?? []))
+    supabase.from('flow_overrides').select('flow_id,occurs_on,amount_cents,skipped,note')
+      .then(({ data }) => setOverrides((data as FlowOverride[]) ?? []))
   }, [])
 
   const now = new Date()
   const nowKey = now.getFullYear() * 12 + now.getMonth()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+  const [view, setView] = useState<'month' | 'day'>('month')
 
   // compare-since anchor: unset = previous snapshot (auto); a picked date sticks
   const [since, setSince] = useState<string | null>(() => localStorage.getItem('juno.nwSince'))
@@ -59,8 +74,9 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
       nwSeries: netWorthSeries(accounts, snaps),
       nwProjected: projectNetWorth(accounts, flows, projCurrent.slice(0, 12), nowKey + 1),
       outlooks: debtOutlooks(accounts, flows, nowKey + 1),
+      daily: projectDaily(flows, liq.cents, today, DAILY_DAYS, { floorCents: shelfCents, overrides }),
     }
-  }, [accounts, flows, snaps, nowKey, shelfCents])
+  }, [accounts, flows, snaps, overrides, nowKey, today, shelfCents])
 
   // a debt's payoff date moved CLOSER since last look → milestone crossed → she beams
   useEffect(() => {
@@ -135,13 +151,53 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
       <CompositionBars accounts={accounts!} />
 
       <div className="chart">
-        <div className="ct">Cash — next 12 months</div>
-        <div className="cs">Liquid cash month by month — committed income only, known income end-dates baked in.</div>
-        <LineChart
-          points={m.projCurrent.slice(0, 12).map((p) => ({ label: monthLabel(p.key), cents: p.cumulative }))}
-          showZero
-          floor={shelfCents}
-        />
+        <div className="ct">
+          Cash — next {view === 'month' ? '12 months' : `${DAILY_DAYS} days`}
+          <span className="viewsw">
+            <button type="button" className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>monthly</button>
+            <button type="button" className={view === 'day' ? 'on' : ''} onClick={() => setView('day')}>day by day</button>
+          </span>
+        </div>
+        <div className="cs">
+          {view === 'month'
+            ? 'Liquid cash month by month — committed income only, known income end-dates baked in.'
+            : 'Every bill and paycheck on its real due date, starting today. A month that ends fine can still go under mid-month — this is where you see it.'}
+        </div>
+        {view === 'month' ? (
+          <LineChart
+            points={m.projCurrent.slice(0, 12).map((p) => ({ label: monthLabel(p.key), cents: p.cumulative }))}
+            showZero
+            floor={shelfCents}
+          />
+        ) : (
+          <>
+            <p className="text-[13.5px] mb-3">
+              {m.daily.firstBelow ? (
+                <>
+                  <span className="text-down font-medium">
+                    {shelfCents > 0 ? 'Shelf breached' : 'Goes under'} {dayLabel(m.daily.firstBelow.date)}
+                  </span>
+                  <span className="text-faint"> — low of {formatCents(m.daily.low!.balance)} on {dayLabel(m.daily.low!.date)}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-mint-ink font-medium">Stays above {shelfCents > 0 ? 'the shelf' : 'zero'}</span>
+                  <span className="text-faint"> — lowest is {formatCents(m.daily.low!.balance)} on {dayLabel(m.daily.low!.date)}</span>
+                </>
+              )}
+            </p>
+            <LineChart
+              points={m.daily.points.map((p) => ({ label: dayLabel(p.date), cents: p.balance }))}
+              showZero
+              floor={shelfCents}
+            />
+            {m.daily.unplaced.length > 0 && (
+              <p className="text-xs text-faint mt-2">
+                Left out — no due day yet: {m.daily.unplaced.map((f) => f.name).join(', ')}. Add one and they'll land on the line.
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       <div className="chart">
@@ -378,6 +434,12 @@ function IncomeMonthsList({ months }: { months: { label: string; cents: number }
 /** Single-series line via Recharts — same system as the scenario chart. Mint = the live layer, gold = the shelf. */
 export function LineChart({ points, showZero = false, floor = 0 }: { points: { label: string; cents: number }[]; showZero?: boolean; floor?: number }) {
   const firstNeg = showZero ? points.find((p) => p.cents <= floor) : undefined
+  // $k ticks lose all resolution on a day-by-day range (a $4,309 balance reads "$4k",
+  // and everything near the line reads "$-0k") — show whole dollars when the range is small.
+  const peak = points.reduce((s, p) => Math.max(s, Math.abs(p.cents)), 0)
+  const tick = peak < 10_000_00
+    ? (v: number) => `$${Math.round(v / 100).toLocaleString()}`
+    : (v: number) => `$${Math.round(v / 100000)}k`
   return (
     <div>
       <div className="h-56">
@@ -385,7 +447,7 @@ export function LineChart({ points, showZero = false, floor = 0 }: { points: { l
           <RLineChart data={points} margin={{ top: 14, right: 12, bottom: 0, left: 4 }}>
             <CartesianGrid stroke="var(--line)" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--faint)' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={40} />
-            <YAxis tickFormatter={(v: number) => `$${Math.round(v / 100000)}k`} tick={{ fontSize: 11, fill: 'var(--faint)' }} tickLine={false} axisLine={false} width={44} />
+            <YAxis tickFormatter={tick} tick={{ fontSize: 11, fill: 'var(--faint)' }} tickLine={false} axisLine={false} width={52} />
             {showZero && <ReferenceLine y={0} stroke="var(--line-strong)" strokeDasharray="4 3" />}
             {showZero && floor > 0 && (
               <ReferenceLine y={floor} stroke="var(--gold)" strokeDasharray="4 3"

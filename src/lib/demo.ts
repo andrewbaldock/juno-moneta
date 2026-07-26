@@ -57,28 +57,31 @@ function fixture(): Record<string, Record<string, unknown>[]> {
   ]
 
   const cash_flows = [
-    flow({ id: 'f-maya-pay', name: 'Maya · salary', direction: 'income', category: 'salary', amount_cents: 6_200_00 }),
-    flow({ id: 'f-dan-pay', name: 'Daniel · salary', direction: 'income', category: 'salary', amount_cents: 1_900_00, cadence: 'biweekly' }),
-    flow({ id: 'f-dan-gig', name: 'Daniel · design side gig', direction: 'income', category: 'contract', amount_cents: 600_00, tax_setaside_pct: 25 }),
+    // Every recurring row carries a due day (biweekly/annual carry a start_date anchor)
+    // so the Dashboard's day-by-day cash view can place them all — a flow with no
+    // anchor is undateable and sits the daily chart out.
+    flow({ id: 'f-maya-pay', name: 'Maya · salary', direction: 'income', category: 'salary', amount_cents: 6_200_00, due_day: 25 }),
+    flow({ id: 'f-dan-pay', name: 'Daniel · salary', direction: 'income', category: 'salary', amount_cents: 1_900_00, cadence: 'biweekly', start_date: monthAgo(1) }),
+    flow({ id: 'f-dan-gig', name: 'Daniel · design side gig', direction: 'income', category: 'contract', amount_cents: 600_00, tax_setaside_pct: 25, due_day: 28 }),
     flow({ id: 'f-mortgage', name: 'Mortgage payment', direction: 'expense', category: 'housing', amount_cents: 2_750_00, essential: true, account_id: 'l-mortgage', due_day: 1, autopay: true }),
-    flow({ id: 'f-proptax', name: 'Property tax', direction: 'expense', category: 'property_tax', amount_cents: 7_200_00, cadence: 'annual', essential: true }),
+    flow({ id: 'f-proptax', name: 'Property tax', direction: 'expense', category: 'property_tax', amount_cents: 7_200_00, cadence: 'annual', essential: true, start_date: monthAgo(10), due_day: 10 }),
     flow({ id: 'f-utils', name: 'Utilities', direction: 'expense', category: 'utilities', amount_cents: 260_00, essential: true, due_day: 15 }),
-    flow({ id: 'f-groceries', name: 'Groceries', direction: 'expense', category: 'groceries', amount_cents: 1_100_00, essential: true, committed: false }),
-    flow({ id: 'f-dining', name: 'Dining out', direction: 'expense', category: 'dining', amount_cents: 520_00, committed: false }),
+    flow({ id: 'f-groceries', name: 'Groceries', direction: 'expense', category: 'groceries', amount_cents: 1_100_00, essential: true, committed: false, due_day: 7 }),
+    flow({ id: 'f-dining', name: 'Dining out', direction: 'expense', category: 'dining', amount_cents: 520_00, committed: false, due_day: 26 }),
     flow({ id: 'f-auto-pay', name: 'Auto loan payment', direction: 'expense', category: 'debt_payment', amount_cents: 430_00, essential: true, account_id: 'l-auto', due_day: 12, autopay: true }),
     flow({ id: 'f-student-pay', name: 'Student loan payment', direction: 'expense', category: 'debt_payment', amount_cents: 290_00, essential: true, account_id: 'l-student', due_day: 20, autopay: true }),
     flow({ id: 'f-card-pay', name: 'Credit card payment', direction: 'expense', category: 'debt_payment', amount_cents: 250_00, account_id: 'l-card', due_day: 8 }),
-    flow({ id: 'f-insurance', name: 'Home & auto insurance', direction: 'expense', category: 'insurance', amount_cents: 340_00, essential: true }),
+    flow({ id: 'f-insurance', name: 'Home & auto insurance', direction: 'expense', category: 'insurance', amount_cents: 340_00, essential: true, due_day: 18 }),
     flow({ id: 'f-phone', name: 'Phone', direction: 'expense', category: 'phone', amount_cents: 120_00, due_day: 22, autopay: true }),
     flow({ id: 'f-internet', name: 'Internet', direction: 'expense', category: 'internet', amount_cents: 75_00, due_day: 5, autopay: true }),
-    flow({ id: 'f-medical', name: 'Health & dental', direction: 'expense', category: 'medical', amount_cents: 180_00, essential: true }),
-    flow({ id: 'f-fuel', name: 'Fuel & transit', direction: 'expense', category: 'fuel', amount_cents: 220_00, committed: false }),
-    flow({ id: 'f-pets', name: 'Pepper (dog)', direction: 'expense', category: 'pets', amount_cents: 90_00, committed: false }),
-    flow({ id: 'f-sub-stream', name: 'Streaming bundle', direction: 'expense', category: 'subscription', amount_cents: 38_00, autopay: true }),
-    flow({ id: 'f-sub-music', name: 'Music', direction: 'expense', category: 'subscription', amount_cents: 17_00, autopay: true }),
-    flow({ id: 'f-sub-cloud', name: 'Cloud storage', direction: 'expense', category: 'subscription', amount_cents: 10_00, autopay: true }),
-    flow({ id: 'f-sub-gym', name: 'Gym', direction: 'expense', category: 'subscription', amount_cents: 75_00, autopay: true }),
-    flow({ id: 'f-misc', name: 'Household & misc', direction: 'expense', category: 'misc', amount_cents: 300_00, committed: false }),
+    flow({ id: 'f-medical', name: 'Health & dental', direction: 'expense', category: 'medical', amount_cents: 180_00, essential: true, due_day: 3 }),
+    flow({ id: 'f-fuel', name: 'Fuel & transit', direction: 'expense', category: 'fuel', amount_cents: 220_00, committed: false, due_day: 14 }),
+    flow({ id: 'f-pets', name: 'Pepper (dog)', direction: 'expense', category: 'pets', amount_cents: 90_00, committed: false, due_day: 9 }),
+    flow({ id: 'f-sub-stream', name: 'Streaming bundle', direction: 'expense', category: 'subscription', amount_cents: 38_00, autopay: true, due_day: 6 }),
+    flow({ id: 'f-sub-music', name: 'Music', direction: 'expense', category: 'subscription', amount_cents: 17_00, autopay: true, due_day: 11 }),
+    flow({ id: 'f-sub-cloud', name: 'Cloud storage', direction: 'expense', category: 'subscription', amount_cents: 10_00, autopay: true, due_day: 16 }),
+    flow({ id: 'f-sub-gym', name: 'Gym', direction: 'expense', category: 'subscription', amount_cents: 75_00, autopay: true, due_day: 2 }),
+    flow({ id: 'f-misc', name: 'Household & misc', direction: 'expense', category: 'misc', amount_cents: 300_00, committed: false, due_day: 24 }),
   ]
 
   // Six months of snapshots for the balances that move — a gently rising net-worth line.
@@ -130,8 +133,9 @@ type Order = { col: string; asc: boolean; nullsFirst: boolean }
  *  writes (never awaited) still take effect.
  *  ponytail: only the methods in real use — extend when a screen needs more. */
 class QB {
-  private op: 'select' | 'insert' | 'update' | 'delete' = 'select'
+  private op: 'select' | 'insert' | 'update' | 'delete' | 'upsert' = 'select'
   private payload: Record<string, unknown>[] = []
+  private conflict: string[] = ['id']
   private filters: ((r: Record<string, unknown>) => boolean)[] = []
   private orders: Order[] = []
   private one = false
@@ -162,6 +166,11 @@ class QB {
     this.op = 'update'; this.payload = [rec]
     queueMicrotask(() => this.run()); return this
   }
+  upsert(rows: Record<string, unknown> | Record<string, unknown>[], o: { onConflict?: string } = {}) {
+    this.op = 'upsert'; this.payload = Array.isArray(rows) ? rows : [rows]
+    this.conflict = (o.onConflict ?? 'id').split(',').map((c) => c.trim())
+    queueMicrotask(() => this.run()); return this
+  }
   delete() { this.op = 'delete'; queueMicrotask(() => this.run()); return this }
 
   private limitN?: number
@@ -179,6 +188,13 @@ class QB {
       const now = iso()
       out = this.payload.map((r) => ({ id: uuid(), created_at: now, updated_at: now, ...r }))
       rows.push(...out)
+    } else if (this.op === 'upsert') {
+      const now = iso()
+      for (const r of this.payload) {
+        const hit = rows.find((x) => this.conflict.every((c) => x[c] === r[c]))
+        if (hit) { Object.assign(hit, r, { updated_at: now }); out.push(hit) }
+        else { const fresh = { id: uuid(), created_at: now, updated_at: now, ...r }; rows.push(fresh); out.push(fresh) }
+      }
     } else if (this.op === 'update') {
       out = rows.filter((r) => this.match(r))
       for (const r of out) Object.assign(r, this.payload[0], { updated_at: iso() })

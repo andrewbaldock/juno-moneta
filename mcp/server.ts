@@ -47,7 +47,7 @@ server.registerTool('juno_state', {
 }, () => run(() => h.state(supa)))
 
 server.registerTool('juno_add_row', {
-  description: 'Add a ledger row. accounts: name, kind (asset|liability), category, balance_usd (omit/null = unknown), interest_rate (APR % for debts, growth %/yr for assets), notes. cash_flows: name, direction (income|expense), category, amount_usd, cadence (monthly|biweekly|weekly|annual|bimonthly|every_4_months|one_time), start_date/end_date (YYYY-MM-DD), essential, committed, tax_setaside_pct, account_id (links a payment to the debt it pays down), notes.',
+  description: 'Add a ledger row. accounts: name, kind (asset|liability), category, balance_usd (omit/null = unknown), interest_rate (APR % for debts, growth %/yr for assets), notes. cash_flows: name, direction (income|expense), category, amount_usd, cadence (monthly|biweekly|weekly|annual|bimonthly|every_4_months|one_time), start_date/end_date (YYYY-MM-DD), essential, committed, tax_setaside_pct, account_id (links a payment to the debt it pays down), due_day (1-31, the day of the month it lands — the day-by-day cash view needs this), late_after_days, autopay, notes.',
   inputSchema: {
     table: TABLE,
     fields: z.record(z.string(), z.unknown()).describe('column values; money as *_usd dollars'),

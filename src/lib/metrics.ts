@@ -37,7 +37,7 @@ export function liquid(accounts: Account[]): { cents: number; missing: string[] 
   return { cents, missing }
 }
 
-function afterTax(f: CashFlow): number {
+export function afterTax(f: CashFlow): number {
   const amt = f.amount_cents!
   return f.tax_setaside_pct ? Math.round(amt * (1 - f.tax_setaside_pct / 100)) : amt
 }
@@ -56,7 +56,7 @@ export function monthlyEquivalent(f: CashFlow): number {
   }
 }
 
-function counts(f: CashFlow, lean: boolean): boolean {
+export function counts(f: CashFlow, lean: boolean): boolean {
   if (!f.active) return false
   if (f.direction === 'income' && !f.committed) return false // hypothetical stays out of the base
   if (lean && f.direction === 'expense' && !f.essential) return false

@@ -251,6 +251,38 @@ body {
 .chart { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 10px; margin-top: 14px }
 .chart .ct { font-family: var(--display); font-weight: 600; font-size: 18px }
 .chart .cs { font-size: 12.5px; color: var(--muted); margin: 2px 0 8px }
+.viewsw { float: right; display: inline-flex; gap: 2px; background: var(--sunken); border: 1px solid var(--line); border-radius: 999px; padding: 2px }
+.viewsw button { font-family: inherit; font-size: 12px; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer }
+.viewsw button.on { background: var(--card); color: var(--ink); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .06) }
+
+/* The ledger — the spreadsheet view, backed by the model. */
+.ledger .lgi { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; max-width: 62ch }
+.ledger .lgw { font-size: 12.5px; color: var(--amber-ink); background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 10px; padding: 8px 11px; margin-bottom: 10px }
+.lgm { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px 8px; margin-bottom: 14px }
+.lgh { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 8px }
+.lgh h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0 }
+.lgt { font-size: 12px; color: var(--muted) }
+.lgt .up { color: var(--mint-ink) }
+.lgt .down { color: var(--down) }
+.lgtbl { width: 100%; border-collapse: collapse; font-size: 13px }
+.lgtbl th { font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line) }
+.lgtbl th.r, .lgtbl td.r { text-align: right }
+.lgtbl td { padding: 3px 8px; border-bottom: 1px solid var(--line) }
+.lgtbl tr:last-child td { border-bottom: 0 }
+.lgtbl td.d { color: var(--faint); width: 3ch; font-variant-numeric: tabular-nums }
+.lgtbl td.bal { font-variant-numeric: tabular-nums; font-weight: 500 }
+.lgtbl td.bal.down { color: var(--down) }
+.lgtbl tr.neg { background: color-mix(in srgb, var(--down) 7%, transparent) }
+.lgtbl .nm { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); cursor: pointer; text-align: left }
+.lgtbl .nm:hover { text-decoration: underline }
+.lgtbl .tag { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 6px }
+.lgtbl .tag.ov { color: var(--gold-ink); border-color: var(--gold) }
+.lgtbl .amt { background: none; border: 0; padding: 1px 3px; font: inherit; font-variant-numeric: tabular-nums; color: inherit; border-radius: 4px; cursor: text }
+.lgtbl .amt:hover { background: var(--sunken); box-shadow: inset 0 0 0 1px var(--line) }
+.lgtbl .amt.ov { color: var(--gold-ink); font-weight: 500 }
+.lgtbl .amte { display: inline-flex; align-items: center; gap: 4px }
+.lgtbl .amte input { width: 8ch; text-align: right; font: inherit; font-variant-numeric: tabular-nums; color: var(--ink); background: var(--sunken); border: 1px solid var(--gold); border-radius: 4px; padding: 1px 4px }
+.lgtbl .amte .skip { font-size: 10px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline }
 .tw { margin-bottom: 24px }
 .twh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px }
 .twh h3 { font-family: var(--display); font-weight: 600; font-size: 21px; margin: 0 }

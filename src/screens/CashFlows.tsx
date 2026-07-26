@@ -6,6 +6,9 @@ import { CADENCE_LABELS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, type Account, ty
 import { beam } from '../components/juno/motifs'
 import { juno } from '../copy/juno'
 import FlowCalendar, { type CalendarLinks } from './FlowCalendar'
+import FlowLedger from './FlowLedger'
+
+type View = 'list' | 'calendar' | 'ledger'
 
 type Draft = {
   id?: string
@@ -62,11 +65,13 @@ export default function CashFlows({ householdId }: { householdId: string }) {
   }
 
   const [debts, setDebts] = useState<Pick<Account, 'id' | 'name'>[]>([])
-  const [view, setView] = useState<'list' | 'calendar'>(() =>
-    localStorage.getItem('juno.flows.view') === 'calendar' ? 'calendar' : 'list')
+  const [view, setView] = useState<View>(() => {
+    const v = localStorage.getItem('juno.flows.view')
+    return v === 'calendar' || v === 'ledger' ? v : 'list'
+  })
   const [calLinks, setCalLinks] = useState<CalendarLinks>({})
 
-  function switchView(v: 'list' | 'calendar') {
+  function switchView(v: View) {
     setView(v)
     localStorage.setItem('juno.flows.view', v)
   }
@@ -183,11 +188,14 @@ export default function CashFlows({ householdId }: { householdId: string }) {
       <div className="flex gap-2 mb-3">
         <button type="button" className={view === 'list' ? 'btn-mint' : 'btn-quiet'} onClick={() => switchView('list')}>List</button>
         <button type="button" className={view === 'calendar' ? 'btn-mint' : 'btn-quiet'} onClick={() => switchView('calendar')}>Calendar</button>
+        <button type="button" className={view === 'ledger' ? 'btn-mint' : 'btn-quiet'} onClick={() => switchView('ledger')}>Ledger</button>
       </div>
 
       {view === 'calendar' && (
         <FlowCalendar flows={rows} links={calLinks} onOpen={(f) => open(toDraft(f))} />
       )}
+
+      {view === 'ledger' && <FlowLedger flows={rows} onOpen={(f) => open(toDraft(f))} />}
 
       {view === 'list' && sections.map(([direction, title]) => (
         <section key={direction} className="tw">

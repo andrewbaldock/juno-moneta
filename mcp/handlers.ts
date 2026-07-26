@@ -71,6 +71,7 @@ const ACCOUNT_FIELDS = ['name', 'kind', 'category', 'interest_rate', 'last4', 'n
 const FLOW_FIELDS = [
   'name', 'direction', 'category', 'cadence', 'start_date', 'end_date',
   'active', 'essential', 'committed', 'tax_setaside_pct', 'account_id', 'notes',
+  'due_day', 'late_after_days', 'autopay',
 ] as const
 
 function toRecord(table: 'accounts' | 'cash_flows', fields: Record<string, unknown>) {
