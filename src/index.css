@@ -259,6 +259,9 @@ body {
 .ledger .lgi { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; max-width: 62ch }
 .ledger .lgw { font-size: 12.5px; color: var(--amber-ink); background: var(--amber-soft); border: 1px solid var(--amber-line); border-radius: 10px; padding: 8px 11px; margin-bottom: 10px }
 .lgn { background: var(--panel2); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 10px 13px; margin-bottom: 14px; font-size: 13px; line-height: 1.55; position: relative }
+.lgn.dash { margin-top: 14px }
+.lgn.dash p:first-child { font-weight: 600 }
+.lgn .src { display: block; margin-top: 8px; font-size: 11px; color: var(--faint) }
 .lgn p { margin: 0 0 6px }
 .lgn p:last-of-type { margin-bottom: 0 }
 .lgn .edit { position: absolute; top: 8px; right: 10px; font-size: 11px; color: var(--faint); background: none; border: 0; cursor: pointer; text-decoration: underline }

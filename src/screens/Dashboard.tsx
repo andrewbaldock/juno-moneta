@@ -31,6 +31,11 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
   const [snaps, setSnaps] = useState<Snapshot[] | null>(null)
   // per-occurrence corrections from the Ledger — the daily line must agree with it
   const [overrides, setOverrides] = useState<FlowOverride[]>([])
+  // the household's own account of why these numbers are what they are. A runway
+  // figure with no explanation next to it is the thing people quietly distrust and
+  // go back to their spreadsheet over, so it belongs beside the number, not one
+  // screen away in the Ledger where it's written.
+  const [note, setNote] = useState('')
 
   useEffect(() => {
     supabase.from('accounts').select('*').then(({ data }) => setAccounts((data as Account[]) ?? []))
@@ -39,6 +44,8 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
       .then(({ data }) => setSnaps((data as Snapshot[]) ?? []))
     supabase.from('flow_overrides').select('flow_id,occurs_on,amount_cents,skipped,note')
       .then(({ data }) => setOverrides((data as FlowOverride[]) ?? []))
+    supabase.from('households').select('settings').limit(1).single()
+      .then(({ data }) => setNote(((data?.settings as { ledger?: { note?: string } } | null)?.ledger?.note) ?? ''))
   }, [])
 
   const now = new Date()
@@ -147,6 +154,13 @@ export default function Dashboard({ householdId, shelfCents, setShelfCents }: {
         <span className="lab">{juno.keptEachMonth} · runway{shelfCents > 0 ? ' to shelf' : ''} {runwayText(m.runCurrent)} (lean {runwayText(m.runLean)})</span>
         <span className="v">{m.current.cents < 0 ? '−' : '+'}{formatCents(Math.abs(m.current.cents))}</span>
       </div>
+
+      {note && (
+        <div className="lgn dash">
+          {note.split('\n').filter(Boolean).map((line, i) => <p key={i}>{line}</p>)}
+          <span className="src">from the Ledger — edit it there</span>
+        </div>
+      )}
 
       <CompositionBars accounts={accounts!} />
 
