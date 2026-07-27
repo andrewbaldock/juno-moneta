@@ -222,6 +222,13 @@ function Home({ session }: { session: Session }) {
     localStorage.setItem('juno.mode', dark ? 'dark' : 'light')
   }, [dark])
 
+  // the demo tour points at things inside both columns — open them before it runs
+  useEffect(() => {
+    const open = () => { setCol1(false); setCol2(false) }
+    window.addEventListener('juno:expand', open)
+    return () => window.removeEventListener('juno:expand', open)
+  }, [])
+
   // auto-collapse column 1 when the viewport is tight, restore when there's room (03-layout.md)
   useEffect(() => {
     function fit() {
