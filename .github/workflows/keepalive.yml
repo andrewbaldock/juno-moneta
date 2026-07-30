@@ -1,0 +1,20 @@
+name: keepalive
+
+# Free-tier Supabase pauses a project after 7 days of no API activity.
+# juno-demo is the recruiter demo, so ping it every 3 days to keep it awake.
+on:
+  schedule:
+    - cron: "0 12 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      # ponytail: publishable key inline, not a secret — it's already public in
+      # the deployed bundle and RLS is what actually guards the data.
+      - name: Ping juno-demo Supabase
+        run: |
+          curl -sSf -o /dev/null -w 'HTTP %{http_code}\n' \
+            "https://xwlwjrcyamzyojdhgznv.supabase.co/rest/v1/" \
+            -H "apikey: sb_publishable_MVcXrMwHQe_6MK6krNe8wQ_ukIXbT6S"
