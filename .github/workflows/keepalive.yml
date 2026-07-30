@@ -16,5 +16,5 @@ jobs:
       - name: Ping juno-demo Supabase
         run: |
           curl -sSf -o /dev/null -w 'HTTP %{http_code}\n' \
-            "https://xwlwjrcyamzyojdhgznv.supabase.co/rest/v1/" \
+            "https://xwlwjrcyamzyojdhgznv.supabase.co/auth/v1/health" \
             -H "apikey: sb_publishable_MVcXrMwHQe_6MK6krNe8wQ_ukIXbT6S"
